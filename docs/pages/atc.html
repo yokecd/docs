@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link href="/docs/css/root.css" rel="stylesheet" />
+    <title>
+      Yoke
+    </title>
+  </head>
+  <body>
+    <label class="hamburger-menu">
+      <input type="checkbox" />
+    </label>
+    <aside class="side-panel">
+      <nav>
+        <div>
+          <a href="/docs/">
+            home
+          </a>
+        </div>
+        <hr />
+        <div>
+          <a href="/docs/pages/atc.html">
+            Air Traffic Controller
+          </a>
+        </div>
+        <hr />
+        <div>
+          <a href="/docs/pages/concepts.html">
+            concepts
+          </a>
+        </div>
+        <hr />
+        <div>
+          <a href="/docs/pages/cli.html">
+            CLI reference
+          </a>
+        </div>
+        <hr />
+        <div>
+          <a href="/docs/pages/examples.html">
+            examples
+          </a>
+        </div>
+        <hr />
+        <div>
+          <a href="/docs/pages/helm_compatibility.html">
+            helm compatibility
+          </a>
+        </div>
+        <hr />
+        <div>
+          <a href="/docs/pages/yokecd.html">
+            yokeCD
+          </a>
+        </div>
+      </nav>
+    </aside>
+    <div class="github-link">
+      <img src="/docs/images/github-mark-white.svg" />
+      <a href="https://github.com/yokecd/yoke">
+        yoke
+      </a>
+    </div>
+    <main>
+      <h1>
+        ATC (Air Traffic Controller)
+      </h1>
+      <section class="container">
+        <h2>
+          Overview
+        </h2>
+        <p>
+          The Air Traffic Controller (ATC) is a Kubernetes controller that enables you to create your own
+          CustomResourceDefinitions (CRDs) and have them implemented by Yoke flights.
+        </p>
+        <h3>
+          The Problem with Current Deployment Tools
+        </h3>
+        <p>
+          <strong>
+            Client-Side Package Managers:
+          </strong>
+        </p>
+        <p>
+          While the Yoke project introduces an innovative approach to defining packages (packages as code, shareable as WASM
+          executables), client-side package managers are not the future of Kubernetes. Being client-side programs, they do not
+          fully leverage Kubernetes APIs and deploy resources ad hoc into your cluster. This approach leaves both you and
+          Kubernetes unaware of the package lifecycle. The only ways to track the package state via Kubernetes (assuming you
+          lack access to the client-side CLI) are to inspect resource labels or find Kubernetes secrets created by these tools
+          for bookkeeping. These methods are specific to the implementation details of the tools themselves.
+        </p>
+        <p>
+          <strong>
+            Limitations of ArgoCD:
+          </strong>
+        </p>
+        <p>
+          Tools like ArgoCD face challenges due to their reliance on generic container resources (e.g., Argo Applications) for
+          managing deployments. While these resources are flexible and convenient, they introduce significant issues. One
+          critical problem is the potential for permission escalation. Any user who can create an ArgoCD application—whether
+          directly via `kubectl` or indirectly by committing to a Git repository—effectively assumes Argo's permissions to
+          deploy arbitrary resources. This undermines the ability to enforce meaningful Role-Based Access Control (RBAC)
+          within your organization, as these permissions are often bypassed through continuous deployment tools like Argo or
+          Flux.
+        </p>
+        <p>
+          Additionally, using generic container resources does not take full advantage of Kubernetes' extensible API for
+          managing deployments or its built-in validation features. Instead, arbitrary data is passed via YAML, often as
+          values to a Helm chart. This approach relies on the Helm chart to validate inputs, which it cannot do reliably.
+        </p>
+        <p>
+          Moreover, the use of generic containers obscures the types of applications being deployed. This forces teams to rely
+          on naming conventions, labeling, and filtering to organize resources, rather than being able to express the
+          <strong>
+            <em>
+              kind
+            </em>
+          </strong>
+          of applications directly at the resource level.
+        </p>
+        <h2>
+          Goal of the Air Traffic Controller
+        </h2>
+        <p>
+          The ATC aims to make package management more native to Kubernetes by enabling packages to be expressed as specific,
+          well-defined resources. This approach allows leveraging core Kubernetes features, such as OpenAPI validation, during
+          package creation. Additionally, using specific resources makes it possible to enforce RBAC, limiting the types of
+          resources users can deploy to the cluster and improving overall security and control.
+        </p>
+      </section>
+      <section class="container">
+        <h2>
+          How It Works
+        </h2>
+        <p>
+          The ATC consists of two components: the controller deployment and the Airway CustomResourceDefinition (CRD). An
+          Airway is an API that enables you to define and connect two core elements: a new CRD of your creation and its
+          corresponding flight implementation, which is specified as a URL to a WASM executable flight.
+        </p>
+        <p>
+          The ATC monitors Airways and spawns Flight Controllers within its process to manage the CRs defined by your CRDs.
+          When a CR is created, updated, or modified, the relevant Flight Controller invokes the corresponding WASM flight to
+          compute the desired state of your resources and applies these changes to the cluster.
+        </p>
+        <p>
+          This design allows you to define custom packages and enables your users to deploy them as native Kubernetes
+          resources.
+        </p>
+        <img style="width: 70%; margin: auto; display: block" src="/docs/images/flow.png" />
+        <h2>
+          How to install the ATC
+        </h2>
+        <pre><code class="language-bash"># Substitute the following variables as desired for your deployment.
+NAMESPACE=atc
+VERSION=v0.0.2
+RELEASE=atc
+URL=https://github.com/yokecd/yoke/releases/download/atc-installer%2F$VERSION/atc-installer.wasm.gz
+
+# Use the yoke cli to deploy the Air Traffic Controller!
+yoke takeoff -namespace $NAMESPACE $RELEASE $URL</code></pre>
+        <h2>
+          Getting started
+        </h2>
+        <p>
+          We will be following along with the example found at
+          <a href="https://github.com/yokecd/examples/tree/main/atc">
+            https://github.com/yokecd/examples/tree/main/atc
+          </a>
+        </p>
+        <p>
+          To begin we will need two things:
+        </p>
+        <ul>
+          <li>
+            The definition of our custom resource
+          </li>
+          <li>
+            A flight (executable wasm program) to implement our resource as a package
+          </li>
+        </ul>
+        <p>
+          For the sake of example let's assume that for our enterprise we wish to create a package representing a "Backend" or
+          "API" service.
+        </p>
+        <p>
+          First let's define a Go package containing our new Custom Resource type.
+        </p>
+        <pre><code id="code_backend_v1" class="language-go">loading...</code></pre>
+        <p>
+          Next we will want to implement a program to transform this resource into an array of resources.
+        </p>
+        <p>
+          Note that nothing in our example implementation is specific to backends or any type of workload. For this example
+          our package will output the backend as a kubernetes Deployment and Service.
+        </p>
+        <pre><code id="code_backend_v1_flight" class="language-go">loading...</code></pre>
+        <p>
+          The flight executable can now be built via the Go Toolchain:
+        </p>
+        <pre><code class="language-bash">GOOS=wasip1 GOARCH=wasm go build ./path/to/main </code></pre>
+        <p>
+          Where and how you choose to host this binary such that it is fetchable by the ATC controller is up to you. Common
+          choices include:
+        </p>
+        <ul>
+          <li>
+            In a public or private github release
+          </li>
+          <li>
+            In an internal service you deploy in your cluster
+          </li>
+          <li>
+            Any service that hosts assets for you and allows you to fetch them over http/https.
+          </li>
+        </ul>
+        <p>
+          Since we are following the example from the
+          <strong>
+            yokecd/examples
+          </strong>
+          repository, we will be using the latest
+          github release of this flight:
+          <strong>
+            https://github.com/yokecd/examples/releases/download/latest/atc_backend_v1_flight.wasm.gz
+          </strong>
+        </p>
+        <p>
+          Now all that's left is to build an Airway using our
+          <strong>
+            v1.Backend
+          </strong>
+          type in conjunction with our Flight.
+          Let's define it in code.
+        </p>
+        <pre><code id="code_backend_airway" class="language-go">loading...</code></pre>
+        <p>
+          With this final piece we have built a flight that installs the Airway that will bind our Backend resource to its
+          implementing flight. Fortunately for the rest of this example, it is also hosted in the github release of our
+          examples repository.
+        </p>
+        <p>
+          Putting it all together let's install yoke, setup a local cluster, install the atc, install our airway, and finally
+          install our new backend component.
+        </p>
+        <pre><code class="language-bash"># install yoke cli
+go install github.com/yokecd/yoke/cmd/yoke@latest
+
+# create a local cluster
+kind delete cluster && kind create cluster
+
+# install the atc
+yoke takeoff -wait 30s --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/atc-installer%2Fv0.0.2/atc-installer.wasm.gz'
+
+# install the yokcd/examples Backend-Airway
+yoke takeoff -wait 30s backendairway "https://github.com/yokecd/examples/releases/download/latest/atc_backend_airway.wasm.gz"
+
+# You are done! You can now create Backends!
+kubectl apply -f - &lt&ltEOF
+  apiVersion: examples.com/v1
+  kind: Backend
+  metadata:
+    name: nginx
+  spec:
+    image: nginx:latest
+    replicas: 2
+EOF</code></pre>
+      </section>
+      <script>
+        for (const item of [
+        {
+        id: "code_backend_v1",
+        url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/backend.go",
+        },
+        {
+        id: "code_backend_v1_flight",
+        url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/flight/main.go",
+        },
+        {
+        id: "code_backend_airway",
+        url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/airway/main.go",
+        },
+        ]) {
+        fetch(item.url)
+        .then((resp) => resp.text())
+        .then((value) => {
+        document.getElementById(item.id).innerHTML = Prism.highlight(value, Prism.languages.go, "go");
+        })
+        .catch((err) => {
+        console.error("failed to fetch content: " + err.toString());
+        });
+        }
+      </script>
+    </main>
+    <footer></footer>
+  </body>
+  <link href="/docs/css/prism-vsc-dark.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script type="module">
+    Prism?.highlightAll();
+  </script>
+</html>
