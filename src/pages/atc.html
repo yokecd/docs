@@ -1,0 +1,211 @@
+<h1>ATC (Air Traffic Controller)</h1>
+
+<section class="container">
+  <h2>Overview</h2>
+  <p>
+    The Air Traffic Controller (ATC) is a Kubernetes controller that enables the creation of CustomResourceDefinitions
+    (CRDs) and implements them through Yoke flights.
+  </p>
+
+  <h3>The Problem with Current Deployment Tools</h3>
+
+  <p><strong>Client-Side Package Managers:</strong></p>
+  <p>
+    Yoke introduces an innovative "packages as code" model, shareable as WASM executables. However, client-side package
+    managers are limited in Kubernetes environments. These tools:
+  </p>
+  <ul>
+    <li>Operate outside Kubernetes APIs, deploying resources ad hoc into clusters.</li>
+    <li>
+      Fail to track package lifecycles effectively without reliance on resource labels or implementation specific
+      secrets.
+    </li>
+  </ul>
+  <p>
+    Such reliance on tool-specific implementations makes managing packages less transparent and harder to standardize.
+  </p>
+
+  <p><strong>Limitations of ArgoCD:</strong></p>
+  <p>
+    Tools like ArgoCD rely on generic container resources (e.g., Argo Applications), which offer flexibility but
+    introduce challenges:
+  </p>
+  <ul>
+    <li>
+      Permission escalation: Users creating Argo applications, either via `kubectl` or Git commits, can bypass
+      organizational RBAC, effectively assuming Argo's deployment permissions.
+    </li>
+    <li>
+      Underuse of Kubernetes API validation: Applications are generic and pass unchecked values to their underlying
+      resource renderer. For example, if using helm, values are unchecked by the kubernetes api and we must rely on
+      chart implementations to validate and surface errors later down the pipeline.
+    </li>
+    <li>
+      Lack of specificity: Applications are deployed as generic resources, obscuring their types and requiring labels or
+      naming conventions to organize and filter them.
+    </li>
+  </ul>
+
+  <h2>Goal of the Air Traffic Controller</h2>
+  <p>
+    The ATC makes package management native to Kubernetes by defining packages as specific, well-structured resources.
+    This approach:
+  </p>
+  <ul>
+    <li>Utilizes Kubernetes features like OpenAPI validation for robust package definitions.</li>
+    <li>Enforces RBAC policies, limiting resource deployment and enhancing security.</li>
+  </ul>
+  <p>
+    By aligning with Kubernetes' native capabilities, ATC improves security, governance, and control over deployments.
+  </p>
+</section>
+
+<section class="container">
+  <h2>How It Works</h2>
+  <p>
+    The ATC consists of two components: the controller deployment and the Airway CustomResourceDefinition (CRD). An
+    Airway is an API that enables you to define and connect two core elements: a new CRD specification of your creation
+    and its corresponding flight implementation, which is specified as a URL to a WASM executable flight.
+  </p>
+
+  <p>
+    The ATC monitors Airways and creates the specified CRD, and spawns Flight Controllers within its process to manage
+    the corresponding CRs. When a CR is created, updated, or modified, the relevant Flight Controller invokes the
+    corresponding WASM flight to compute the desired state of your resources and applies these changes to the cluster.
+  </p>
+
+  <p>
+    This design allows you to define custom packages and enables your users to deploy them as native Kubernetes
+    resources.
+  </p>
+
+  <img style="width: 70%; margin: auto; display: block" src="/docs/images/flow.png" />
+
+  <h2>How to install the ATC</h2>
+  <pre><code class="language-bash"># Substitute the following variables as desired for your deployment.
+NAMESPACE=atc
+VERSION=v0.0.2
+RELEASE=atc
+URL=https://github.com/yokecd/yoke/releases/download/atc-installer%2F$VERSION/atc-installer.wasm.gz
+
+# Use the yoke cli to deploy the Air Traffic Controller!
+yoke takeoff -namespace $NAMESPACE $RELEASE $URL</code></pre>
+
+  <h2>Getting started</h2>
+
+  <p>
+    We will be following along with the example found at
+    <a href="https://github.com/yokecd/examples/tree/main/atc">https://github.com/yokecd/examples/tree/main/atc</a>
+  </p>
+
+  <p>To begin we will need two things:</p>
+  <ul>
+    <li>The definition of our custom resource</li>
+    <li>A flight (executable wasm program) to implement our resource as a package</li>
+  </ul>
+  <p>
+    For the sake of example let's assume that for our enterprise we wish to create a package representing a "Backend" or
+    "API" service.
+  </p>
+  <p>First let's define a Go package containing our new Custom Resource type.</p>
+
+  <pre><strong>source:&nbsp;</strong><a href="https://github.com/yokecd/examples/tree/main/atc/backend/v1/backend.go">atc/backend/v1/backend.go</a></pre>
+  <pre><code id="code_backend_v1" class="language-go">loading...</code></pre>
+
+  <p>Next we will want to implement a program to transform this resource into an array of resources.</p>
+
+  <p>
+    Note that nothing in our example implementation is specific to backends or any type of workload. For this example
+    our package will output the backend as a kubernetes Deployment and Service.
+  </p>
+
+  <pre><strong>source:&nbsp;</strong><a href="https://github.com/yokecd/examples/tree/main/atc/backend/v1/flight/main.go">atc/backend/v1/flight/main.go</a></pre>
+  <pre><code id="code_backend_v1_flight" class="language-go">loading...</code></pre>
+
+  <p>The flight executable can now be built via the Go Toolchain:</p>
+  <pre><code class="language-bash">GOOS=wasip1 GOARCH=wasm go build ./path/to/main </code></pre>
+
+  <p>
+    Where and how you choose to host this binary such that it is fetchable by the ATC controller is up to you. Common
+    choices include:
+  </p>
+  <ul>
+    <li>In a public or private github release</li>
+    <li>In an internal service you deploy in your cluster</li>
+    <li>Any service that hosts assets for you and allows you to fetch them over http/https.</li>
+  </ul>
+
+  <p>
+    Since we are following the example from the <strong>yokecd/examples</strong> repository, we will be using the latest
+    github release of this flight:
+    <strong>https://github.com/yokecd/examples/releases/download/latest/atc_backend_v1_flight.wasm.gz</strong>
+  </p>
+
+  <p>
+    Now all that's left is to build an Airway using our <strong>v1.Backend</strong> type in conjunction with our Flight.
+    Let's define it in code.
+  </p>
+
+  <pre><strong>source:&nbsp;</strong><a href="https://github.com/yokecd/examples/tree/main/atc/backend/airway/main.go">atc/backend/airway/main.go</a></pre>
+  <pre><code id="code_backend_airway" class="language-go">loading...</code></pre>
+
+  <p>
+    With this final piece we have built a flight that installs the Airway that will bind our Backend resource to its
+    implementing flight. Fortunately for the rest of this example, it is also hosted in the github release of our
+    examples repository.
+  </p>
+
+  <p>
+    Putting it all together let's install yoke, setup a local cluster, install the atc, install our airway, and finally
+    install our new backend component.
+  </p>
+
+  <pre><code class="language-bash"># install yoke cli
+go install github.com/yokecd/yoke/cmd/yoke@latest
+
+# create a local cluster
+kind delete cluster && kind create cluster
+
+# install the atc
+yoke takeoff -wait 30s --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/atc-installer%2Fv0.0.2/atc-installer.wasm.gz'
+
+# install the yokcd/examples Backend-Airway
+yoke takeoff -wait 30s backendairway "https://github.com/yokecd/examples/releases/download/latest/atc_backend_airway.wasm.gz"
+
+# You are done! You can now create Backends!
+kubectl apply -f - &lt&ltEOF
+  apiVersion: examples.com/v1
+  kind: Backend
+  metadata:
+    name: nginx
+  spec:
+    image: nginx:latest
+    replicas: 2
+EOF</code></pre>
+</section>
+
+<script>
+  for (const item of [
+    {
+      id: "code_backend_v1",
+      url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/backend.go",
+    },
+    {
+      id: "code_backend_v1_flight",
+      url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/flight/main.go",
+    },
+    {
+      id: "code_backend_airway",
+      url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/airway/main.go",
+    },
+  ]) {
+    fetch(item.url)
+      .then((resp) => resp.text())
+      .then((value) => {
+        document.getElementById(item.id).innerHTML = Prism.highlight(value, Prism.languages.go, "go");
+      })
+      .catch((err) => {
+        console.error("failed to fetch content: " + err.toString());
+      });
+  }
+</script>
