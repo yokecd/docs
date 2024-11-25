@@ -8,7 +8,7 @@
 
   <h3>Install the Yoke CLI</h3>
   <h4>From source</h4>
-  <pre><code class="language-bash">go install github.com/davidmdm/yoke/cmd/yoke@latest</code></pre>
+  <pre><code class="language-bash">go install github.com/yokecd/yoke/cmd/yoke@latest</code></pre>
 
   <h3>Deploy your first package</h3>
   <pre><code class="language-bash">yoke takeoff my-release https://my-domain.com/example/v1/main.wasm.gz</code></pre>
@@ -16,13 +16,13 @@
   <h3>Visit the core docs</h3>
   <ul>
     <li>
-      <a href="/yoke-website/pages/concepts.html">concepts</a>
+      <a href="/docs/pages/concepts.html">concepts</a>
     </li>
     <li>
-      <a href="/yoke-website/pages/examples.html">examples</a>
+      <a href="/docs/pages/examples.html">examples</a>
     </li>
     <li>
-      <a href="/yoke-website/pages/yokecd.html">integrate with ArgoCD</a>
+      <a href="/docs/pages/yokecd.html">integrate with ArgoCD</a>
     </li>
   </ul>
 </section>
@@ -43,7 +43,7 @@
       >Flights are programs that generate the desired Kubernetes resources in either JSON or YAML format and output them
       to stdout.</strong
     >. Flights are typically packaged as
-    <strong><a href="/yoke-website/pages/concepts.html#why-wasm">WebAssembly (wasm) executables </a></strong>, with Yoke
+    <strong><a href="/docs/pages/concepts.html#why-wasm">WebAssembly (wasm) executables </a></strong>, with Yoke
     embedding Wazero, a zero-dependency wasm runtime for Go, to execute these programs.
   </p>
 

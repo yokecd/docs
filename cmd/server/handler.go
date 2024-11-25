@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"golang.org/x/net/http2"
@@ -22,14 +21,14 @@ func Handler() http.Handler {
 		w.Write(knownPages.Home)
 	})
 
-	mux.HandleFunc("GET /yoke-website/{$}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /docs/{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Write(knownPages.Home)
 	})
 
 	mux.HandleFunc("GET /", func() http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			content, err := content.ReadFile(path.Join("docs", strings.TrimPrefix(r.URL.Path, "/yoke-website/")))
+			content, err := content.ReadFile(r.URL.Path[1:])
 			if err != nil {
 				w.Header().Set("Content-Type", "text/html")
 				if errors.Is(err, os.ErrNotExist) {
