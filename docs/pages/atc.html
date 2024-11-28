@@ -73,8 +73,8 @@
           Overview
         </h2>
         <p>
-          The Air Traffic Controller (ATC) is a Kubernetes controller that enables you to create your own
-          CustomResourceDefinitions (CRDs) and have them implemented by Yoke flights.
+          The Air Traffic Controller (ATC) is a Kubernetes controller that enables the creation of CustomResourceDefinitions
+          (CRDs) and implements them through Yoke flights.
         </p>
         <h3>
           The Problem with Current Deployment Tools
@@ -85,12 +85,20 @@
           </strong>
         </p>
         <p>
-          While the Yoke project introduces an innovative approach to defining packages (packages as code, shareable as WASM
-          executables), client-side package managers are not the future of Kubernetes. Being client-side programs, they do not
-          fully leverage Kubernetes APIs and deploy resources ad hoc into your cluster. This approach leaves both you and
-          Kubernetes unaware of the package lifecycle. The only ways to track the package state via Kubernetes (assuming you
-          lack access to the client-side CLI) are to inspect resource labels or find Kubernetes secrets created by these tools
-          for bookkeeping. These methods are specific to the implementation details of the tools themselves.
+          Yoke introduces an innovative "packages as code" model, shareable as WASM executables. However, client-side package
+          managers are limited in Kubernetes environments. These tools:
+        </p>
+        <ul>
+          <li>
+            Operate outside Kubernetes APIs, deploying resources ad hoc into clusters.
+          </li>
+          <li>
+            Fail to track package lifecycles effectively without reliance on resource labels or implementation specific
+            secrets.
+          </li>
+        </ul>
+        <p>
+          Such reliance on tool-specific implementations makes managing packages less transparent and harder to standardize.
         </p>
         <p>
           <strong>
@@ -98,37 +106,41 @@
           </strong>
         </p>
         <p>
-          Tools like ArgoCD face challenges due to their reliance on generic container resources (e.g., Argo Applications) for
-          managing deployments. While these resources are flexible and convenient, they introduce significant issues. One
-          critical problem is the potential for permission escalation. Any user who can create an ArgoCD application—whether
-          directly via `kubectl` or indirectly by committing to a Git repository—effectively assumes Argo's permissions to
-          deploy arbitrary resources. This undermines the ability to enforce meaningful Role-Based Access Control (RBAC)
-          within your organization, as these permissions are often bypassed through continuous deployment tools like Argo or
-          Flux.
+          Tools like ArgoCD rely on generic container resources (e.g., Argo Applications), which offer flexibility but
+          introduce challenges:
         </p>
-        <p>
-          Additionally, using generic container resources does not take full advantage of Kubernetes' extensible API for
-          managing deployments or its built-in validation features. Instead, arbitrary data is passed via YAML, often as
-          values to a Helm chart. This approach relies on the Helm chart to validate inputs, which it cannot do reliably.
-        </p>
-        <p>
-          Moreover, the use of generic containers obscures the types of applications being deployed. This forces teams to rely
-          on naming conventions, labeling, and filtering to organize resources, rather than being able to express the
-          <strong>
-            <em>
-              kind
-            </em>
-          </strong>
-          of applications directly at the resource level.
-        </p>
+        <ul>
+          <li>
+            Permission escalation: Users creating Argo applications, either via `kubectl` or Git commits, can bypass
+            organizational RBAC, effectively assuming Argo's deployment permissions.
+          </li>
+          <li>
+            Underuse of Kubernetes API validation: Applications are generic and pass unchecked values to their underlying
+            resource renderer. For example, if using helm, values are unchecked by the kubernetes api and we must rely on
+            chart implementations to validate and surface errors later down the pipeline.
+          </li>
+          <li>
+            Lack of specificity: Applications are deployed as generic resources, obscuring their types and requiring labels or
+            naming conventions to organize and filter them.
+          </li>
+        </ul>
         <h2>
           Goal of the Air Traffic Controller
         </h2>
         <p>
-          The ATC aims to make package management more native to Kubernetes by enabling packages to be expressed as specific,
-          well-defined resources. This approach allows leveraging core Kubernetes features, such as OpenAPI validation, during
-          package creation. Additionally, using specific resources makes it possible to enforce RBAC, limiting the types of
-          resources users can deploy to the cluster and improving overall security and control.
+          The ATC makes package management native to Kubernetes by defining packages as specific, well-structured resources.
+          This approach:
+        </p>
+        <ul>
+          <li>
+            Utilizes Kubernetes features like OpenAPI validation for robust package definitions.
+          </li>
+          <li>
+            Enforces RBAC policies, limiting resource deployment and enhancing security.
+          </li>
+        </ul>
+        <p>
+          By aligning with Kubernetes' native capabilities, ATC improves security, governance, and control over deployments.
         </p>
       </section>
       <section class="container">
@@ -137,13 +149,13 @@
         </h2>
         <p>
           The ATC consists of two components: the controller deployment and the Airway CustomResourceDefinition (CRD). An
-          Airway is an API that enables you to define and connect two core elements: a new CRD of your creation and its
-          corresponding flight implementation, which is specified as a URL to a WASM executable flight.
+          Airway is an API that enables you to define and connect two core elements: a new CRD specification of your creation
+          and its corresponding flight implementation, which is specified as a URL to a WASM executable flight.
         </p>
         <p>
-          The ATC monitors Airways and spawns Flight Controllers within its process to manage the CRs defined by your CRDs.
-          When a CR is created, updated, or modified, the relevant Flight Controller invokes the corresponding WASM flight to
-          compute the desired state of your resources and applies these changes to the cluster.
+          The ATC monitors Airways and creates the specified CRD, and spawns Flight Controllers within its process to manage
+          the corresponding CRs. When a CR is created, updated, or modified, the relevant Flight Controller invokes the
+          corresponding WASM flight to compute the desired state of your resources and applies these changes to the cluster.
         </p>
         <p>
           This design allows you to define custom packages and enables your users to deploy them as native Kubernetes
@@ -188,6 +200,7 @@ yoke takeoff -namespace $NAMESPACE $RELEASE $URL</code></pre>
         <p>
           First let's define a Go package containing our new Custom Resource type.
         </p>
+        <pre><strong>source:&nbsp;</strong><a href="https://github.com/yokecd/examples/tree/main/atc/backend/v1/backend.go">atc/backend/v1/backend.go</a></pre>
         <pre><code id="code_backend_v1" class="language-go">loading...</code></pre>
         <p>
           Next we will want to implement a program to transform this resource into an array of resources.
@@ -196,6 +209,7 @@ yoke takeoff -namespace $NAMESPACE $RELEASE $URL</code></pre>
           Note that nothing in our example implementation is specific to backends or any type of workload. For this example
           our package will output the backend as a kubernetes Deployment and Service.
         </p>
+        <pre><strong>source:&nbsp;</strong><a href="https://github.com/yokecd/examples/tree/main/atc/backend/v1/flight/main.go">atc/backend/v1/flight/main.go</a></pre>
         <pre><code id="code_backend_v1_flight" class="language-go">loading...</code></pre>
         <p>
           The flight executable can now be built via the Go Toolchain:
@@ -235,6 +249,7 @@ yoke takeoff -namespace $NAMESPACE $RELEASE $URL</code></pre>
           type in conjunction with our Flight.
           Let's define it in code.
         </p>
+        <pre><strong>source:&nbsp;</strong><a href="https://github.com/yokecd/examples/tree/main/atc/backend/airway/main.go">atc/backend/airway/main.go</a></pre>
         <pre><code id="code_backend_airway" class="language-go">loading...</code></pre>
         <p>
           With this final piece we have built a flight that installs the Airway that will bind our Backend resource to its

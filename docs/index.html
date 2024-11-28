@@ -111,8 +111,29 @@
           What is Yoke?
         </h2>
         <p>
-          Yoke is a Kubernetes package manager that facilitates the downloading and deployment of packages to Kubernetes.
+          The Yoke Project is a set of tools for working with package management differently than the status quo. Where once
+          only YAML and templates of YAML ruled the representation of Kubernetes resources and the packages thereof, we can
+          now work with code and benefit from native control flow, type checking, compiler guarantees, testing, linters, and
+          other fundamental tools of software engineering.
         </p>
+        <p>
+          It consists of:
+        </p>
+        <ul>
+          <li>
+            A client-side package manager for deploying code packages to Kubernetes.
+          </li>
+          <li>
+            An ArgoCD Config Management Plugin that enables ArgoCD to work with code packages.
+          </li>
+          <li>
+            A server-side controller that allows you to create CustomResourceDefinitions (CRDs) to represent packages natively
+            in Kubernetes.
+          </li>
+          <li>
+            Go packages to facilitate the transition from Helm Charts to Yoke Flights (code packages).
+          </li>
+        </ul>
         <p>
           The primary distinction between Yoke and other Kubernetes package managers, such as Helm and Timoni, lies in how
           Yoke describes packages. In the context of yoke packages are called
