@@ -6,8 +6,10 @@
 
 :root {
   --text-color: #ece9e9;
-  --pop-color: #6ad7e5;
-  --background-color: #070936;
+  --pop-color: white;
+  --background-color: #2D2F33;
+  --primary-color: #9bdde0;
+  --link-hover: #ff6600;
 
   --body-y-margin: 20px;
 }
@@ -80,7 +82,7 @@ a {
 }
 
 a:hover {
-  color: #ff6600d4;
+  color: var(--link-hover);
 }
 
 .table {
@@ -118,7 +120,7 @@ p + p {
   min-width: 400px;
   margin: 1.5rem auto;
   padding: 1rem 2.5rem;
-  background-color: #f7b767;
+  background-color: var(--primary-color);
   color: black;
 }
 
@@ -127,7 +129,7 @@ p + p {
 }
 
 .container a:hover {
-  color: rgb(0, 140, 255);
+  color: var(--link-hover);
 }
 
 pre {
@@ -149,6 +151,7 @@ pre {
   position: fixed;
   top: var(--hamburger-margin);
   left: var(--hamburger-margin);
+
 
   width: max-content;
   z-index: 5;
