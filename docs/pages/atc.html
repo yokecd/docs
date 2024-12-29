@@ -283,6 +283,72 @@ kubectl apply -f - &lt&ltEOF
     replicas: 2
 EOF</code></pre>
       </section>
+      <section class="container">
+        <h2 id="converters">
+          Conversion Webhooks via Converter Wasm Programs
+        </h2>
+        <p>
+          Airways describe the
+          <code>
+            CustomResourceDefinition
+          </code>
+          you wish to create. Therefore, it is best to follow the
+          recommended best practices outlined in the official Kubernetes documentation:
+          <a
+      href="https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/"
+    >
+            Versions in CustomResourceDefinitions
+          </a
+    >
+          .
+        </p>
+        <ul>
+          <li>
+            Avoid breaking changes.
+          </li>
+          <li>
+            Use
+            <a
+        href="https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#webhook-conversion"
+      >
+              conversion webhooks
+            </a>
+            to translate between different versions of your
+            <code>
+              CustomResource
+            </code>
+            .
+          </li>
+        </ul>
+        <p>
+          Setting up your own Conversion Webhook Server and deploying it to support breaking changes for your APIs can be
+          cumbersome. To simplify the process of evolving your Airways and APIs over time, the ATC supports conversion
+          webhooks for Airways that specify a converter Wasm executable.
+        </p>
+        <pre><code class="lang-yaml">apiVersion: yoke.cd/v1alpha1
+kind: Airway
+metadata:
+  name: example
+spec:
+  wasmUrls:
+    flight: http://wasmcache/example.flight.wasm.gz
+    # Specifying a converter enables the ATC to handle conversion webhooks for our custom resource.
+    converter: http://wasmcache/example.converter.wasm.gz
+  template:
+    # crd definition
+</code></pre>
+        <p>
+          A converter program reads a conversion review object, as defined in the conversion webhook
+          <a
+      href="https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#webhook-conversion"
+    >
+            documentation
+          </a
+    >
+          , from standard input and writes the resulting conversion review, with the conversion response populated, back to
+          standard output.
+        </p>
+      </section>
       <script>
         for (const item of [
         {
