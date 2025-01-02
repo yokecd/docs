@@ -267,7 +267,7 @@ go install github.com/yokecd/yoke/cmd/yoke@latest
 kind delete cluster && kind create cluster
 
 # install the atc
-yoke takeoff -wait 30s --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/atc-installer%2Fv0.4.0/atc-installer.wasm.gz'
+yoke takeoff -wait 30s --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/atc-installer%2Fv0.3.1/atc-installer.wasm.gz'
 
 # install the yokcd/examples Backend-Airway
 yoke takeoff -wait 30s backendairway "https://github.com/yokecd/examples/releases/download/latest/atc_backend_airway.wasm.gz"
