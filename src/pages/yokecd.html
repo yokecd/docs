@@ -35,7 +35,7 @@
   <h2>Introducing YokeCD</h2>
   <p>
     To be compatible with ArgoCD, Yoke offers an ArgoCD CPM Sidecar Docker image hosted at
-    <a href="https://hub.docker.com/repository/docker/davidmdm/yokecd/general">DockerHub - davidmdm/yokecd</a>.
+    <a href="https://github.com/yokecd/yoke/pkgs/container/yokecd">ghcr.io/yokecd/yokecd</a>.
   </p>
 </section>
 
@@ -50,10 +50,10 @@
     applications.
   </p>
   <p>To configure the yokecd-installer you can pass a yaml or json document over stdin:</p>
-  <pre><code class="language-yaml">version: 0.5.3 # default is "latest"
+  <pre><code class="language-yaml">version: 0.6.0 # default is "latest"
 argocd: {} // # values are passed directly to the argocd chart.</code></pre>
   <p>Ready for takeoff?</p>
-  <pre><code class="language-bash">yoke takeoff --namespace argocd yokecd https://github.com/yokecd/yoke/releases/download/yokecd-installer%2Fv0.5.4/yokecd-installer.wasm.gz</code></pre>
+  <pre><code class="language-bash">yoke takeoff --namespace argocd yokecd https://github.com/yokecd/yoke/releases/download/yokecd-installer%2Fv0.6.0/yokecd-installer.wasm.gz</code></pre>
 
   <h3>Patch an Existing ArgoCD Installation</h3>
   <p>
@@ -70,7 +70,7 @@ spec:
     spec:
       containers:
         - name: yokecd
-          image: davidmdm/yokecd:latest # or any version you prefer
+          image: ghcr.io/yokecd/yokecd:latest # or any version you prefer
           imagePullPolicy: IfNotPresent # use the imagePullPolicy that best fits your needs.
           command:
             - /var/run/argocd/argocd-cmp-server
