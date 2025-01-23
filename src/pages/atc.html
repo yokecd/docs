@@ -84,9 +84,9 @@
   <h2>How to install the ATC</h2>
   <pre><code class="language-bash"># Substitute the following variables as desired for your deployment.
 NAMESPACE=atc
-VERSION=v0.6.0
+VERSION=latest
 RELEASE=atc
-URL=https://github.com/yokecd/yoke/releases/download/atc-installer%2F$VERSION/atc-installer.wasm.gz
+URL=https://github.com/yokecd/yoke/releases/download/$VERSION/atc-installer.wasm.gz
 
 # Use the yoke cli to deploy the Air Traffic Controller!
 yoke takeoff -namespace $NAMESPACE $RELEASE $URL</code></pre>
@@ -167,7 +167,7 @@ go install github.com/yokecd/yoke/cmd/yoke@latest
 kind delete cluster && kind create cluster
 
 # install the atc
-yoke takeoff -wait 30s --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/atc-installer%2Fv0.6.0/atc-installer.wasm.gz'
+yoke takeoff -wait 30s --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/latest/atc-installer.wasm.gz'
 
 # install the yokcd/examples Backend-Airway
 yoke takeoff -wait 30s backendairway "https://github.com/yokecd/examples/releases/download/latest/atc_backend_airway.wasm.gz"
