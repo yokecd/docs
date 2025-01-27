@@ -185,6 +185,46 @@ EOF</code></pre>
 </section>
 
 <section class="container">
+  <h2 id="flight-overrides">Flight Overrides</h2>
+  <p>
+    Generally, the custom resources we create do not expose flight implementation details. Users can create resources
+    without being aware of the underlying implementation details of the CRD.
+  </p>
+  <p>
+    However, this abstraction can pose challenges during flight development, as Airways only accept a single
+    <em>Flight Module URL</em>. Any changes to the flight implementation will update all custom resources associated
+    with that airway.
+  </p>
+  <p>
+    During flight development, you may want to test a new implementation in production with a non-critical application
+    as a canary.
+  </p>
+  <p>
+    To enable resource-specific flight implementation updates, you can override the flight URL using the following
+    annotation: <strong>overrides.yoke.cd/flight: &lt;url&gt;</strong>.
+  </p>
+  <p>
+    The ATC will use the module located at the specified URL and apply it to the custom resource. For example, you can
+    add the annotation as shown below:
+  </p>
+  <pre><code class="language-bash">kubectl apply -f - &lt;&lt;EOF 
+  apiVersion: examples.com/v1 
+  kind: Backend
+  metadata: 
+    name: nginx 
+      annotations: 
+        overrides.yoke.cd/flight: http://path/to/development/module.wasm 
+  spec: ... 
+  EOF</code></pre>
+  <p>
+    The development module is not cached, as it is assumed to be neither stable nor versioned. This allows you to
+    iterate on the module by updating its source without changing the URL. However, this also means that overrides are
+    not recommended for production use. They are significantly less performant than standard modules because each update
+    forces the ATC to download and compile the WASM module.
+  </p>
+</section>
+
+<section class="container">
   <h2 id="converters">Conversion Webhooks via Converter Wasm Programs</h2>
 
   <p>
