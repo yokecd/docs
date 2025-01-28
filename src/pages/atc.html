@@ -208,14 +208,14 @@ EOF</code></pre>
     add the annotation as shown below:
   </p>
   <pre><code class="language-bash">kubectl apply -f - &lt;&lt;EOF 
-  apiVersion: examples.com/v1 
-  kind: Backend
-  metadata: 
-    name: nginx 
-      annotations: 
-        overrides.yoke.cd/flight: http://path/to/development/module.wasm 
-  spec: ... 
-  EOF</code></pre>
+apiVersion: examples.com/v1 
+kind: Backend
+metadata: 
+  name: nginx 
+    annotations: 
+      overrides.yoke.cd/flight: http://path/to/development/module.wasm 
+spec: ... 
+EOF</code></pre>
   <p>
     The development module is not cached, as it is assumed to be neither stable nor versioned. This allows you to
     iterate on the module by updating its source without changing the URL. However, this also means that overrides are
