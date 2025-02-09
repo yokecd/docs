@@ -106,46 +106,51 @@
         </p>
       </section>
       <section class="container">
-        <h2 id="flight-dependencies">
-          Flight Dependencies
+        <h2 id="flight-outputs">
+          Flight Output
         </h2>
         <p>
-          Flights are programs that output a list or arbitrary kubernetes resources to be applied as a singular release. There
-          are two types of resources that are not considered to be part of the release but dependencies of the release:
-          Namespaces and Custom Resource Definitions.
+          Flights are programs that generate a list of arbitrary Kubernetes resources to be applied as a single release.
         </p>
         <p>
-          When your flight contains a custom resource, it can be useful to specify the custom resource defintion to ensure
-          that the cluster will be able to accept your resource. This is more practical than doing it in two staged releases,
-          the prior where we install dependencies, and the latter where we install our desired resources.
-        </p>
-        <p class="pre-list">
-          However this poses problems:
+          The output can be structured in three different ways:
         </p>
         <ul>
           <li>
-            If the flight is deleted, do we delete the CRDs or Namespaces specified in the flight? This may potentially remove
-            resources defined in other flights that use the Namespace or CRD.
+            A single resource.
           </li>
           <li>
-            If the Namespace or CRD already exists, how do we handle release ownership? Aren't they shared resources?
+            A list of resources.
+          </li>
+          <li>
+            A list of lists of resources.
           </li>
         </ul>
         <p>
-          To solve these issues, yoke considers Namespaces and CRDs to be dependencies of the Flight, and does not consider
-          them part of the Flight's resources to be tracked in the revision history. By default, no action is performed and
-          dependencies are simply ignored. When running the takeoff command, we can specify which dependencies we want to
-          apply via the
-          <b>
-            --create-namespaces
-          </b>
-          and
-          <b>
-            --create-crds
-          </b>
-          flags.
+          The first format is useful when using Yoke to manage a single resource over time. It is functionally equivalent to a
+          list containing a single resource but provides a more convenient representation.
         </p>
-        <pre><code class="language-bash">yoke takeoff --create-namespaces --create-crds foo example.wasm.gz</code></pre>
+        <p>
+          The second format, a list of resources, is the most common type of flight output. This represents the set of
+          resources associated with your release.
+        </p>
+        <p>
+          The third format, a list of lists of resources, still constitutes a single release, but the resources are applied in
+          stages. This is useful for dependencies within a release. For example, if resource B depends on resource A being
+          present in the cluster, we can deploy A in an earlier stage before B. Internally, a flat list of resources is
+          treated as a list of lists where each inner list contains a single resource, representing a single deployment stage.
+        </p>
+        <p>
+          Common use cases for staged releases include, but are not limited to:
+        </p>
+        <ul>
+          <li>
+            Deploying a Custom Resource Definition (CRD) before creating custom resources that depend on it.
+          </li>
+          <li>
+            Creating namespaces before adding new resources to them.
+          </li>
+        </ul>
       </section>
       <section class="container">
         <h2 id="why-wasm">
