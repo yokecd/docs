@@ -231,6 +231,107 @@ yoke takeoff my-release < resources.yaml</code></pre>
         <pre><code class="language-bash">GOOS=wasip1 GOARCH=wasm go build -o main.wasm ./my-flight
 yoke takeoff my-release ./main.wasm</code></pre>
       </section>
+      <section class="container">
+        <h2 id="cluster-access">
+          Cluster Access
+        </h2>
+        <p>
+          Some Flight implementations may require generating random data, which is useful for tasks like creating initial
+          passwords or generating cryptographic certificates. However, this approach has a drawback: the inability to
+          reproduce the same values across runs. This can lead to unnecessary churn when deploying updated releases.
+        </p>
+        <p>
+          One of the key advantages of using WebAssembly (Wasm) is its secure sandboxing, which ensures package
+          implementations run in isolation without direct access to external systems. Since Wasm is merely an assembly
+          instruction set, it can only perform numeric computations by itself.
+        </p>
+        <p>
+          To extend Wasm’s capabilities, we use the
+          <strong>
+            WebAssembly System Interface (WASI)
+          </strong>
+          , which allows
+          external calls from the WebAssembly module to the host. Yoke leverages WASI to expose a single function:
+          <strong>
+            <em>
+              k8s_lookup
+            </em>
+          </strong
+    >
+          .
+        </p>
+        <p>
+          This function enables Flights to look up Kubernetes resources, but only those owned by the target release. This
+          allows packages to reuse values from previous iterations, reducing unnecessary churn, rollouts, and downtime during
+          updates.
+        </p>
+        <p>
+          This feature is opt-in during takeoff:
+        </p>
+        <pre><code class="language-bash">yoke takeoff --cluster-access foo bar.wasm</code></pre>
+        <h3>
+          A Note on Security
+        </h3>
+        <p>
+          Security-conscious users may wonder whether granting Flights access to the cluster introduces a vulnerability.
+          However, Wasm modules do not have direct access to the cluster. Instead, they interact with the host Yoke program,
+          which retrieves the requested resource and returns its JSON representation to the module’s memory. The Wasm module
+          itself
+          <strong>
+            cannot
+          </strong>
+          open sockets, file descriptors, or network connections.
+        </p>
+        <p>
+          That said, this feature remains opt-in and is recommended for use only with trusted Flights.
+        </p>
+        <h3>
+          Example Usage
+        </h3>
+        <p>
+          The
+          <strong>
+            <em>
+              k8s_lookup
+            </em>
+          </strong>
+          function is a low-level host export, and users are not expected to call it
+          directly. Instead, Yoke provides a Go package that wraps it in a more user-friendly API:
+          <strong>
+            github.com/yokecd/yoke/pkg/flight/wasi/k8s
+          </strong>
+          .
+        </p>
+        <p>
+          For other languages, contributors are welcome to reference the implementation or request official support for their
+          preferred ecosystem.
+        </p>
+        <p>
+          A Go-based example can be found
+          <a href="https://github.com/yokecd/examples/blob/main/flights/lookup/main.go">
+            here
+          </a>
+          .
+        </p>
+        <pre><code id="lookup-example" class="language-go"></code></pre>
+      </section>
+      <script>
+        for (const item of [
+        {
+        id: "lookup-example",
+        url: "https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/flights/lookup/main.go",
+        },
+        ]) {
+        fetch(item.url)
+        .then((resp) => resp.text())
+        .then((value) => {
+        document.getElementById(item.id).innerHTML = Prism.highlight(value, Prism.languages.go, "go");
+        })
+        .catch((err) => {
+        console.error("failed to fetch content: " + err.toString());
+        });
+        }
+      </script>
     </main>
     <footer></footer>
   </body>
