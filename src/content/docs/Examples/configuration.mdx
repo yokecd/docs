@@ -1,0 +1,134 @@
+---
+title: Configuring your Flights
+sidebar:
+  order: 2
+---
+
+### Disclaimer
+- the following examples are written in Go but any language that compiles to wasm is a first class citizen for Yoke. Writing it in Go allows us to take advantage of Kubernete's core [api](https://github.com/kubernetes/api) packages. Languages that do not compile to wasm can still be used but not benefit from Yoke's asset management. For more information see [Why Wasm](/docs/concepts/wasm#why-wasm).
+- These examples assume some familiarity with the Go toolchain, and that **yoke** has already been installed.
+
+## Flight configuration
+
+In the previous examples, our Flights have been static. Every invocation will return the exact same output. This is a valid approach, especially when you are reusing low-altitude Flight functions and want to take advantage of type-safety and features provided by your coding environment. Changes can be applied by re-compiling different configurations of the Flight and versioning those assets through time.
+
+However, sometimes we wish to have one compiled program that can be invoked at deploy time with different settings. To achieve this, Yoke supports instantiating wasm executables with both flags and standard input.
+
+Let's look at a simplified version of the deployment example from above and let us consider how we could configure the replica count.
+
+```go
+// example.go
+
+package main
+
+import (
+	"encoding/json"
+	"os"
+
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/utils/ptr"
+)
+
+// This example is not fully runnable
+// As the deployment is missing too many properties to be useful.
+// We will only be interested in learning to configure the Replicas value.
+func main() {
+	deployment := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: ptr.To[int32](2),
+		},
+	}
+
+	json.NewEncoder(os.Stdout).Encode(deployment)
+}
+```
+
+#### Using Flags
+
+```go
+// example.go
+
+package main
+
+import (
+	"encoding/json"
+	"flag"
+	"os"
+
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/utils/ptr"
+)
+
+func main() {
+	replicas := flag.Int("replicas", 2, "replica count for deployment")
+	flag.Parse()
+
+	deployment := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: ptr.To(int32(*replicas)),
+		},
+	}
+
+	json.NewEncoder(os.Stdout).Encode(deployment)
+}
+```
+
+After compiling it we can invoke it from the Yoke CLI with flags:
+
+```bash
+yoke takeoff example ./example.wasm -- --replicas=5
+```
+
+#### Using Stdin
+
+This approach is most similar to how Helm uses `values.yaml` to pass configuration, as using stdin is equivalent to passing a file.
+
+```go
+// example.go
+
+package main
+
+import (
+	"encoding/json"
+	"io"
+	"os"
+
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/utils/ptr"
+)
+
+type Values struct {
+	Replicas int32 `json:"replicas"`
+}
+
+func main() {
+	// Default Values
+	values := Values{Replicas: 2}
+
+	// Here we need to check that the error is not io.EOF as this is what you will get if
+	// no standard input is used.
+	if err := json.NewDecoder(os.Stdin).Decode(&values); err != nil && err != io.EOF {
+		panic(err)
+	}
+
+	deployment := &appsv1.Deployment{
+		Spec: appsv1.DeploymentSpec{
+			Replicas: ptr.To(values.Replicas),
+		},
+	}
+
+	json.NewEncoder(os.Stdout).Encode(deployment)
+}
+```
+
+After compiling it we can invoke it from the Yoke CLI with stdin:
+
+```bash
+yoke takeoff example ./example.wasm <<< '{"replicas":5}'
+```
+
+or
+
+```bash
+yoke takeoff example ./example.wasm < values.json
+```

@@ -1,0 +1,44 @@
+---
+title: Cluster Access
+sidebar:
+  order: 3
+---
+
+### Acccessing the cluster
+
+Some Flight implementations may require generating random data, which is useful for tasks like creating initial passwords or generating cryptographic certificates. However, this approach has a drawback: the inability to reproduce the same values across runs. This can lead to unnecessary churn when deploying updated releases.
+
+One of the key advantages of using WebAssembly (Wasm) is its secure sandboxing, which ensures package implementations run in isolation without direct access to external systems. Since Wasm is merely an assembly instruction set, it can only perform numeric computations by itself.
+
+To extend Wasm’s capabilities, we use the **WebAssembly System Interface (WASI)**, which allows external calls from the WebAssembly module to the host. Yoke leverages WASI to expose a single function: ***k8s_lookup***.
+
+This function enables Flights to look up Kubernetes resources, but only those owned by the target release. This allows packages to reuse values from previous iterations, reducing unnecessary churn, rollouts, and downtime during updates.
+
+This feature is opt-in during takeoff:
+
+```bash
+yoke takeoff --cluster-access foo bar.wasm
+```
+
+### A Note on Security
+
+Security-conscious users may wonder whether granting Flights access to the cluster introduces a vulnerability. However, Wasm modules do not have direct access to the cluster. Instead, they interact with the host Yoke program, which retrieves the requested resource and returns its JSON representation to the module’s memory. The Wasm module itself **cannot** open sockets, file descriptors, or network connections.
+
+That said, this feature remains opt-in and is recommended for use only with trusted Flights.
+
+### Example Usage
+
+The ***k8s_lookup*** function is a low-level host export, and users are not expected to call it directly. Instead, Yoke provides a Go package that wraps it in a more user-friendly API: **github.com/yokecd/yoke/pkg/flight/wasi/k8s**.
+
+For other languages, contributors are welcome to reference the implementation or request official support for their preferred ecosystem.
+
+A Go-based example can be found [here](https://github.com/yokecd/examples/blob/main/flights/lookup/main.go).
+
+---
+
+import { Code } from '@astrojs/starlight/components';
+
+export const exampleCode = await fetch('https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/flights/lookup/main.go').then(resp => resp.text())
+export const fileName = 'example.go';
+
+<Code code={exampleCode} lang="go" title={'example.go'} />

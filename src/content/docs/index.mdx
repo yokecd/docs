@@ -1,0 +1,79 @@
+---
+title: Infrastructure as Code, but actually
+template: splash
+sidebar:
+  order: 1
+hero:
+  image:
+    file: ../../assets/yoke.v2.webp
+  # actions:
+  #   - text: Example Guide
+  #     link: /guides/example/
+  #     icon: right-arrow
+  #   - text: Read the Starlight docs
+  #     link: https://starlight.astro.build
+  #     icon: external
+  #     variant: minimal
+---
+
+# Introducing the Infrastructure as Code Package Manager for Kubernetes
+
+<hr />
+
+## Getting started
+
+### Install the Yoke CLI
+
+#### From source
+```bash
+go install github.com/yokecd/yoke/cmd/yoke@latest
+```
+
+#### Download a pre-built binary
+```bash
+# Substitute tag and architecture to fit your needs.
+curl -L -o - 'https://github.com/yokecd/yoke/releases/download/latest/yoke_latest_darwin_arm64.gz' | gunzip  > /usr/local/bin/yoke && \
+chmod +x /usr/local/bin/yoke
+```
+
+### Deploy your first package
+```bash
+yoke takeoff my-release https://my-domain.com/example/v1/main.wasm.gz
+```
+
+### Visit the core docs
+- [concepts](/docs/concepts/flights/)
+- [examples](/docs/examples/basics/)
+- [helm compatibility](/docs/helm-compatibility)
+- [integrate with ArgoCD](/docs/yokecd)
+- [air traffic controller](/docs/airtrafficcontroller/atc/)
+## What is Yoke?
+
+The Yoke Project is a set of tools for working with package management differently than the status quo. Where once only YAML and templates of YAML ruled the representation of Kubernetes resources and the packages thereof, we can now work with code and benefit from native control flow, type checking, compiler guarantees, testing, linters, and other fundamental tools of software engineering.
+
+It consists of:
+
+- A client-side package manager for deploying code packages to Kubernetes.
+- An ArgoCD Config Management Plugin that enables ArgoCD to work with code packages.
+- A server-side controller that allows you to create CustomResourceDefinitions (CRDs) to represent packages natively in Kubernetes.
+- Go packages to facilitate the transition from Helm Charts to Yoke Flights (code packages).
+
+The primary distinction between Yoke and other Kubernetes package managers, such as Helm and Timoni, lies in how Yoke describes packages. In the context of yoke packages are called **Flights** (Flights are to Yoke what Charts are to Helm). Unlike Helm and Timoni, which define packages using YAML, CUE, or other data/configuration languages, **yoke utilizes general-purpose code to describe kubernetes packages**.
+
+With yoke, **Flights are programs that generate the desired Kubernetes resources in either JSON or YAML format and output them to stdout**. Flights are typically packaged as **[WebAssembly (wasm) executables](/docs/pages/concepts.html#why-wasm)**, with Yoke embedding Wazero, a zero-dependency wasm runtime for Go, to execute these programs.
+
+Sharing packages is the same as sharing code. Package components can be distributed and versioned using the respective language's ecosystem package manager, such as npm, cargo, or Go modules. **Any language that compiles to wasm enjoys first-class support in Yoke**. If your chosen language does not compile to wasm, you can still invoke the program and pipe the output directly to Yoke. However, this approach comes with certain drawbacks, including potential issues related to portability and security.
+
+## Why Another Package Manager?
+
+As the DevOps ecosystem transitions from platform-operators to platform-engineering, our tools for interfacing with Kubernetes (K8s) must evolve accordingly. Describing Kubernetes resources through text templates represents the minimum standard we have set. It's evident that this approach doesn't align with software engineering practices. It lacks essential features such as proper type safety, compiler guarantees, validation, testing, autocompletion, and consistent IDE support.
+
+The crucial observation to note is that Kubernetes (K8s) resources differ fundamentally from web pages or emails. So, why do we use templates as if they were? These files represent diverse APIs supported by Kubernetes; in essence, they are structured data. **The most effective tools for handling structured data are programming languages**.
+
+Working with raw yaml manifests for representing Kubernetes APIs is error prone. When we template them we are no longer concerned with the configuration of our resources but instead the rendering of the format of our configuration.
+
+New tools like CUE, jsonnette, PKL, and others have emerged to address some of the short comings of raw YAML configuration and templating. Inspiring new K8s package managers such as [timoni](https://timoni.sh/). However it is yoke's stance that these tools will always fall short of the safety, flexibility and power of building your packages from code.
+
+With the emergence of a shared cross-platform target for code, WebAssembly (wasm), it is now possible to package and utilize the Kubernetes ecosystem with greater emphasis on type safety, testing, and developer experience than ever before. This is the niche Yoke aims to fill within the K8s Package Management Landscape.
+
+
