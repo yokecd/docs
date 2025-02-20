@@ -60,7 +60,7 @@ It consists of:
 
 The primary distinction between Yoke and other Kubernetes package managers, such as Helm and Timoni, lies in how Yoke describes packages. In the context of yoke packages are called **Flights** (Flights are to Yoke what Charts are to Helm). Unlike Helm and Timoni, which define packages using YAML, CUE, or other data/configuration languages, **yoke utilizes general-purpose code to describe kubernetes packages**.
 
-With yoke, **Flights are programs that generate the desired Kubernetes resources in either JSON or YAML format and output them to stdout**. Flights are typically packaged as **[WebAssembly (wasm) executables](/docs/pages/concepts.html#why-wasm)**, with Yoke embedding Wazero, a zero-dependency wasm runtime for Go, to execute these programs.
+With yoke, **Flights are programs that generate the desired Kubernetes resources in either JSON or YAML format and output them to stdout**. Flights are typically packaged as **[WebAssembly (wasm) executables](/docs/concepts/wasm)**, with Yoke embedding Wazero, a zero-dependency wasm runtime for Go, to execute these programs.
 
 Sharing packages is the same as sharing code. Package components can be distributed and versioned using the respective language's ecosystem package manager, such as npm, cargo, or Go modules. **Any language that compiles to wasm enjoys first-class support in Yoke**. If your chosen language does not compile to wasm, you can still invoke the program and pipe the output directly to Yoke. However, this approach comes with certain drawbacks, including potential issues related to portability and security.
 
