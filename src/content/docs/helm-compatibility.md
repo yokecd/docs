@@ -38,6 +38,7 @@ import (
 	"fmt"
 	"os"
 
+  "github.com/yokecd/yoke/pkg/flight"
 	"github.com/yokecd/yoke/pkg/helm"
 )
 
@@ -58,12 +59,8 @@ func run() error {
 	}
 
 	resources, err := chart.Render(
-		// The first positional arg is the release name used
-		// For example if this program is invoked as: yoke takeoff example ./example.wasm
-		// os.Args[0] will be "example"
-		os.Args[0],
-		// Target namespace.
-		"default",
+    flight.Release(),
+		flight.Namespace(),
 		// Arguments as described by the bitnami redis chart.
 		// Any value that serializes to equivalent json will work.
 		map[string]any{"auth": map[string]any{"enabled": "false"}},
@@ -134,11 +131,12 @@ import (
 	"encoding/json"
 	"os"
 
+  "github.com/yokecd/yoke/pkg/flight"
 	"github.com/yokecd/yoke/cmd/examples/internal/flights/mongodb"
 )
 
 func main() {
-	resources, err := mongodb.RenderChart(os.Args[0], "default", &mongodb.Values{
+	resources, err := mongodb.RenderChart(flight.Release(), flight.Namespace(), &mongodb.Values{
 		// ... values ...
 	})
 	if err != nil {
