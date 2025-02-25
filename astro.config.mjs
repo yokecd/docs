@@ -10,7 +10,12 @@ export default defineConfig({
   base: 'docs',
   integrations: [
     starlight({
-      title: 'Yoke',
+      title: 'yoke',
+      logo: {
+        dark: './src/assets/logo/SVG/Logo_Yoke_White__Logo_Yoke_.svg',
+        light: './src/assets/logo/SVG/Logo_Yoke_.svg',
+        replacesTitle: true,
+      },
       social: {
         github: 'https://github.com/yokecd/yoke',
       },
