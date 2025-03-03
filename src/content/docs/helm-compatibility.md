@@ -24,7 +24,7 @@ The following examples are built in Go. This is partly due to the ease of using 
 The Yoke helm package supplies a function for creating a Chart from it's embedded archive. Suppose you wanted to use the [bitnami redis chart](oci://registry-1.docker.io/bitnamicharts/redis) from Yoke. The first step is to download the archive using helm.
 
 ```bash
-helm pull oci://registry-1.docker.io/bitnamicharts/redis
+helm pull oci://registry-1.docker.io/bitnamicharts/redis --version 18.17.0
 ```
 
 This will create a tar file on your machine such as **redis-18.17.0.tgz**. From there you embed it into your application, and invoke it using the name of the release, destination k8s namespace, and any values you wish to pass to it.

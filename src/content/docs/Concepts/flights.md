@@ -32,7 +32,7 @@ The first format is useful when using Yoke to manage a single resource over time
 
 The second format, a list of resources, is the most common type of flight output. This represents the set of resources associated with your release.
 
-The third format, a list of lists of resources, still constitutes a single release, but the resources are applied in stages. This is useful for dependencies within a release. For example, if resource B depends on resource A being present in the cluster, we can deploy A in an earlier stage before B. Internally, a flat list of resources is treated as a list of lists where each inner list contains a single resource, representing a single deployment stage.
+The third format, a list of lists of resources, still constitutes a single release, but the resources are applied in stages. This is useful for dependencies within a release. For example, if resource B depends on resource A being present in the cluster, we can deploy A in an earlier stage before B. Internally, a flat list of resources is treated as a list of lists of length one: a deployment with a single stage.
 
 Common use cases for staged releases include, but are not limited to:
 
