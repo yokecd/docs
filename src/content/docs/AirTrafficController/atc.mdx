@@ -185,3 +185,43 @@ spec:
 A converter program reads a conversion review object, as defined in the conversion webhook [documentation](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#webhook-conversion), from standard input and writes the resulting conversion review, with the conversion response populated, back to standard output.
 
 An example conversion program written in Go can be found within the [yoke](https://github.com/yokecd/yoke) project [here](https://github.com/yokecd/yoke/blob/56a7bbced2aff4a3862a95b609bf49732a455ae0/cmd/atc/internal/testing/apis/backend/converter/main.go#L1-L179).
+
+
+## Using Private Flights
+
+Private flights are backed by Container Registries, and yoke uses docker credentials in order to authenticate to them.
+To authenticate the Air Traffic Controller to a container registry follow these steps:
+
+- Create a docker-registry type secret in the same namespace as the ATC
+- Provide secret's name as the `dockerConfigSecretName` to the atc-installer when installing or updating the ATC.
+- You can now create Airways with flights pointing to authenticated registries.
+
+Example:
+
+```bash
+# Generate the basic auth required for your registry
+AUTH=$(echo -n ${USERNAME}:${PASWORD} | base64)
+
+# Create the configuration file. This can also be created via other means.
+# This is just a simple example, but as long as you create a valid docker configuration that does not depend
+# on your local credential store, it will work.
+cat <<EOF
+{
+  "auths": {
+    "$REGISTRY": {
+      "auth": "$AUTH"
+    }
+  }
+} > config.json
+EOF
+
+# Create a docker-registry secret from the docker config we generated. 
+# Here it is called "registry" but you can choose any name you see fit.
+kubectl create secret docker-registry registry --from-file=config.json
+
+# Install or update the ATC passing the secret name as an option.
+# Make sure that the secret and the ATC are deployed in the same namespace.
+yoke takeoff atc 'https://github.com/yokecd/yoke/releases/download/latest/atc-installer.wasm.gz' <<EOF
+dockerConfigSecretName: registry
+EOF
+```

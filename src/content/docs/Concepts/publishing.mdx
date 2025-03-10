@@ -1,0 +1,50 @@
+---
+title: Publishing Flights
+sidebar:
+  order: 4
+---
+
+## Overview
+
+The Yoke CLI works by deploying releases backed by references to WASM executables.
+
+Yoke supports three types of references:
+
+- local paths
+- http/https urls
+- oci urls
+
+Local paths are great for local development and quick interactions with your kubernetes cluster.
+
+However there comes a time when we want to publish our flights to a shareable location.
+
+Common options include:
+
+- Github Releases (https)
+- Object Storage (https)
+- In your own File-Server (http(s))
+- Container Registries (oci)
+
+## Private Flights
+
+Yoke does not maintain any registry or have any plans to do so in the foreseeable future.
+Instead it leans on existing container-registries to provide that functionality.
+
+The **yoke stow** command allows us to publish our wasm files as open container images.
+
+```bash
+yoke stow ./main.wasm oci://ghcr.io/<org>/<repo>:<tag>
+```
+
+Yoke uses your docker credentials to authenticate to to the registry.
+
+```bash
+# Login to private registry
+docker login ghcr.io
+
+# Upload to private registry using oci:// prefixed url
+yoke stow ./main.wasm oci://ghcr.io/example/repo:v1
+
+# Use the url to fetch the wasm asset from the container registry.
+yoke takeoff foo oci://ghcr.io/example/repo:v1
+```
