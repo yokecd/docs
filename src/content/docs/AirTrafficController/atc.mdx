@@ -200,7 +200,7 @@ Example:
 
 ```bash
 # Generate the basic auth required for your registry
-AUTH=$(echo -n ${USERNAME}:${PASWORD} | base64)
+AUTH=$(echo -n ${USERNAME}:${PASSWORD} | base64)
 
 # Create the configuration file. This can also be created via other means.
 # This is just a simple example, but as long as you create a valid docker configuration that does not depend
