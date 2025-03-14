@@ -37,7 +37,7 @@ argocd: {} # values are passed directly to the argocd chart.
 Ready for takeoff?
 
 ```bash
-yoke takeoff --create-namespace --namespace argocd yokecd https://github.com/yokecd/yoke/releases/download/latest/yokecd-installer.wasm.gz
+yoke takeoff --create-namespace --namespace argocd yokecd oci://ghcr.io/yokecd/yokecd-installer:latest
 ```
 
 ### Patch an Existing ArgoCD Installation

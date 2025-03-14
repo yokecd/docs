@@ -53,10 +53,9 @@ This design allows you to define custom packages and enables your users to deplo
 NAMESPACE=atc
 VERSION=latest
 RELEASE=atc
-URL=https://github.com/yokecd/yoke/releases/download/$VERSION/atc-installer.wasm.gz
 
 # Use the yoke cli to deploy the Air Traffic Controller!
-yoke takeoff --create-namespace --namespace $NAMESPACE $RELEASE $URL
+yoke takeoff --create-namespace --namespace $NAMESPACE $RELEASE oci://ghcr.io/yokecd/atc-installer:$VERSION
 ```
 
 ## Getting started
@@ -116,7 +115,7 @@ go install github.com/yokecd/yoke/cmd/yoke@latest
 kind delete cluster && kind create cluster
 
 # install the atc
-yoke takeoff -wait 30s --create-namespace --namespace atc atc 'https://github.com/yokecd/yoke/releases/download/latest/atc-installer.wasm.gz'
+yoke takeoff -wait 30s --create-namespace --namespace atc atc oci://ghcr.io/yokecd/atc-installer:latest
 
 # install the yokcd/examples Backend-Airway
 yoke takeoff -wait 30s backendairway "https://github.com/yokecd/examples/releases/download/latest/atc_backend_airway.wasm.gz"
@@ -221,7 +220,7 @@ kubectl create secret docker-registry registry --from-file=config.json
 
 # Install or update the ATC passing the secret name as an option.
 # Make sure that the secret and the ATC are deployed in the same namespace.
-yoke takeoff atc 'https://github.com/yokecd/yoke/releases/download/latest/atc-installer.wasm.gz' <<EOF
+yoke takeoff atc oci://ghcr.io/yokecd/atc-installer:latest <<EOF
 dockerConfigSecretName: registry
 EOF
 ```
