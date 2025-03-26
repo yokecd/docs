@@ -4,6 +4,7 @@
 <desc>Created with Fabric.js 5.2.4</desc>
 <defs>
 </defs>
+<rect x="0" y="0" width="100%" height="100%" fill="transparent"></rect>
 <g transform="matrix(1 0 0 1 540 540)" id="e3503633-21fd-4135-a77a-312f3891a42d"  >
 <rect style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(255,255,255); fill-rule: nonzero; opacity: 1; visibility: hidden;" vector-effect="non-scaling-stroke"  x="-540" y="-540" rx="0" ry="0" width="1080" height="1080" />
 </g>
@@ -12,7 +13,7 @@
 <g transform="matrix(1 0 0 1 527.15 498.99)"  >
 <path style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(158,152,202); fill-rule: nonzero; opacity: 1;" vector-effect="non-scaling-stroke"  transform=" translate(-523.9, -122)" d="M 509 122 L 538.8 122 L 508.99999999999994 122 Z" stroke-linecap="round" />
 </g>
-<g transform="matrix(3 0 0 3 540 540)"  >
+<g transform="matrix(3.12 0 0 3.12 540.26 551.82)"  >
 <path style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(158,152,202); fill-rule: nonzero; opacity: 1;" vector-effect="non-scaling-stroke"  transform=" translate(-173.1, -97.7)" d="M 333.6 195.4 C 339.20000000000005 188.8 340.6 187.1 346.20000000000005 180.5 L 281.7 0 L 281.2 0.2 L 281.2 0 C 281.2 0 245.29999999999998 11.5 245.29999999999998 11.5 L 254.2 41.7 L 272.7 50.5 L 309.8 154.3 C 294.2 157.70000000000002 241.9 147.5 225.20000000000002 144 L 203.3 94 L 142.9 94 L 120.9 144.1 C 103.4 147.7 51.2 157.79999999999998 36.400000000000006 154.2 L 36.400000000000006 154.2 L 73.60000000000001 50.19999999999999 L 91.5 41.69999999999999 L 100.4 11.49999999999999 L 64.5 0 L 0 180.5 C 5.6 187.1 7 188.8 12.6 195.4 L 165.9 168.1 L 180.3 168.1 L 333.6 195.4 Z" stroke-linecap="round" />
 </g>
 <g transform="matrix(1 0 0 1 1166.1 560.99)"  >
