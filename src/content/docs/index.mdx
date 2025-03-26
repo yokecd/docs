@@ -1,61 +1,60 @@
 ---
 title: ''
-description: Infrastructure as Code, but actually
+description: 'Infrastructure as Code, but actually'
 template: splash
 sidebar:
   order: 1
 hero:
   title: Kubernetes Package Management for those who love to code
-  tagline: Infrastructure as Code, But Actually.
+  tagline: 'Infrastructure as Code, But Actually.'
   image:
     dark: ../../assets/logo/SVG/Logo_Yoke_White__Logo_Yoke_.svg
     light: ../../assets/logo/SVG/Logo_Yoke_.svg
-
-  # actions:
-  #   - text: Example Guide
-  #     link: /guides/example/
-  #     icon: right-arrow
-  #   - text: Read the Starlight docs
-  #     link: https://starlight.astro.build
-  #     icon: external
-  #     variant: minimal
 ---
-
 ## Getting started
 
 ### Install the Yoke CLI
 
 #### From source
+
 ```bash
 go install github.com/yokecd/yoke/cmd/yoke@latest
 ```
 
 #### Download a pre-built binary
+
 ```bash
 # Substitute tag and architecture to fit your needs.
 curl -L -o - 'https://github.com/yokecd/yoke/releases/download/latest/yoke_latest_darwin_arm64.gz' | gunzip  > /usr/local/bin/yoke && \
 chmod +x /usr/local/bin/yoke
 ```
+
 #### Using homebrew
+
 ```bash
 brew install yoke
 ```
+
 #### Using scoop
-```powershell
+
+```bash
 scoop install yoke
 ```
 
 ### Deploy your first package
+
 ```bash
 yoke takeoff my-release https://my-domain.com/example/v1/main.wasm.gz
 ```
 
 ### Visit the core docs
+
 - [concepts](/docs/concepts/flights/)
 - [examples](/docs/examples/basics/)
 - [helm compatibility](/docs/helm-compatibility)
 - [integrate with ArgoCD](/docs/yokecd)
 - [air traffic controller](/docs/airtrafficcontroller/atc/)
+
 ## What is Yoke?
 
 The Yoke Project is a set of tools for working with package management differently than the status quo. Where once only YAML and templates of YAML ruled the representation of Kubernetes resources and the packages thereof, we can now work with code and benefit from native control flow, type checking, compiler guarantees, testing, linters, and other fundamental tools of software engineering.
@@ -84,5 +83,4 @@ Working with raw yaml manifests for representing Kubernetes APIs is error prone.
 New tools like CUE, jsonnette, PKL, and others have emerged to address some of the short comings of raw YAML configuration and templating. Inspiring new K8s package managers such as [timoni](https://timoni.sh/). However it is yoke's stance that these tools will always fall short of the safety, flexibility and power of building your packages from code.
 
 With the emergence of a shared cross-platform target for code, WebAssembly (wasm), it is now possible to package and utilize the Kubernetes ecosystem with greater emphasis on type safety, testing, and developer experience than ever before. This is the niche Yoke aims to fill within the K8s Package Management Landscape.
-
 
