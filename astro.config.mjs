@@ -18,6 +18,7 @@ export default defineConfig({
       },
       social: {
         github: 'https://github.com/yokecd/yoke',
+        discord: 'https://discord.com/invite/tHCRKg6s7Z',
       },
     }),
     react(),
