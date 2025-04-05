@@ -25,7 +25,7 @@ spec:
 
 Let's explore what each of these modes do.
 
-## Standard
+### Standard
 
 Standard mode is the default and is equivalent to leaving the `mode` property unset.
 
@@ -39,7 +39,7 @@ The only way to rectify drift in this mode without updating the package’s cust
 
 This mode is useful when you want the flexibility to make manual changes to your cluster.
 
-## Static
+### Static
 
 Static mode, as its name implies, aims to prevent drift from the desired state from happening at all.
 
@@ -54,7 +54,7 @@ In this mode, users must modify the custom resource representing the package to 
 Although this mode is powerful and generally prevents drift, the admission webhook is configured to be ignored on failure.
 This means that in rare, unexpected cases, drift can still occur. Therefore, it is still recommended to set the `fixDriftInterval` property.
 
-## Dynamic
+### Dynamic
 
 In Dynamic mode, changes to any subresources of packages managed by the ATC will requeue the package for evaluation.  
 Unlike Static mode, where modifications are compared to the current desired state and rejected if they conflict,  
