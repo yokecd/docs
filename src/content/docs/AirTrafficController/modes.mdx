@@ -96,3 +96,26 @@ And that’s it. When a Secret changes in an external source, the following occu
 
 The same effect would occur if we updated the Secret directly via `kubectl`, but this example offers a more realistic, real-world use case for how this might work.
 
+## Overrides
+
+Modes are described at the Airway level. However sometimes we may want to change the mode for a specific package without affecting all resources associated with our Airway.
+
+To achieve this the ATC will use the mode specified by the annotation: `overrides.yoke.cd/mode`.
+Given that this is an annotation, if the value is not exactly one of `standard`, `static` or `dynamic` it will be ignored.
+
+If we use our Backends example from the previous section, we could override the mode for a specific package like so:
+
+```yaml
+apiVersion: examples.com/v1
+kind: Backend
+metadata:
+  annotations:
+    # This sets the subresources of this backend to be managed by the atc given this specific mode.
+    # This overrides the mode set at the Airway level defining Backends.
+    overrides.yoke.cd/mode: standard
+  name: demo
+spec:
+  image: nginx:latest
+  replicas: 2
+```
+
