@@ -1,0 +1,98 @@
+---
+title: Modes
+---
+Airways are custom resources that allow you to create custom resource definitions bound to a flight implementation.
+This enables us to manage our packages as Kubernetes resources. Airway modes refer to how the subresources of our packages
+deployed by the ATC are managed.
+
+Airways support three modes:
+
+- standard
+- static
+- dynamic
+
+An airway's mode can be set as part of that Airway's specification:
+
+```yaml
+apiVersion: yoke.cd/v1alpha1
+kind: Airway
+metadata:
+  name: modes.examples.com
+spec:
+  mode: dynamic
+  # ... other fields ...
+```
+
+Let's explore what each of these modes do.
+
+## Standard
+
+Standard mode is the default and is equivalent to leaving the `mode` property unset.
+
+In Standard mode, subresources of your packages are left unmanaged.
+This means third-party actors (users with API access, other controllers, and so on) can make changes to subresources created by the ATC.
+
+These changes will persist until the package's custom resource is modified and the ATC computes a new desired state for the package --
+at which point any conflicting changes made by other actors will be overwritten via server-side apply.
+
+The only way to rectify drift in this mode without updating the package’s custom resource is to set the `fixDriftInterval` in the airway's specification.
+
+This mode is useful when you want the flexibility to make manual changes to your cluster.
+
+## Static
+
+Static mode, as its name implies, aims to prevent drift from the desired state from happening at all.
+
+If a subresource of a package is modified in a way that conflicts with the desired state, the update is rejected at admission, and you will see an error similar to the following:
+
+_**admission webhook "resources.yoke.cd" denied the request: cannot modify flight sub-resources.**_
+
+This mode is useful when you want to lock down changes to your cluster, keeping drift to a minimum.
+
+In this mode, users must modify the custom resource representing the package to make changes, and are disallowed from modifying its subresources directly.
+
+Although this mode is powerful and generally prevents drift, the admission webhook is configured to be ignored on failure.
+This means that in rare, unexpected cases, drift can still occur. Therefore, it is still recommended to set the `fixDriftInterval` property.
+
+## Dynamic
+
+In Dynamic mode, changes to any subresources of packages managed by the ATC will requeue the package for evaluation.  
+Unlike Static mode, where modifications are compared to the current desired state and rejected if they conflict,  
+Dynamic mode always allows modifications to pass admission.
+
+However, even if a conflicting state is admitted, the flight will be re-evaluated and the desired state reapplied.  
+This mode is most similar to ArgoCD's self-healing behavior.
+It's like using `fixDriftInterval`, except drift detection is triggered not on some interval duration, but on every change to a subresource.
+
+Dynamic mode has one particularly interesting property: since the flight is being re-evaluated, it doesn't need to return the old desired state—it can compute a new one.  
+This, coupled with [cluster-access](/docs/concepts/cluster-access/), means that flight implementations can react to changes made by users or controllers to their subresources.
+
+Let's take a look at how this solves a classic Kubernetes problem: redeploying a Deployment when a Secret changes.
+
+> **_Note:_**  
+> We’ll be discussing this example at a high level. A fully working code example will be added to Yoke's [examples](https://github.com/yokecd/examples) repository in the future.
+
+Suppose we have an Airway called `backends.examples.com`, and the flight associated with it produces three resources:
+
+- A Deployment
+- A Secret
+- An ExternalSecret
+
+An ExternalSecret is a custom resource from the [External Secrets Operator](https://external-secrets.io/latest/) project that allows you to sync secrets from external sources like Vault, AWS Secrets Manager, Google Secret Manager, and more.
+
+Our flight would have the following properties:
+
+- Cluster-access is enabled at the Airway level.
+- The Secret computes itself by reading its own data from the cluster.
+- The ExternalSecret references the Secret.
+- The Secret’s data is hashed and used as a label on the Deployment.
+
+And that’s it. When a Secret changes in an external source, the following occurs:
+
+1. The External Secrets Operator updates the Secret.
+2. The package is requeued for evaluation because the Secret was modified.
+3. The flight reads the Secret's data, hashes it, and updates the Deployment label.
+4. The Deployment is redeployed.
+
+The same effect would occur if we updated the Secret directly via `kubectl`, but this example offers a more realistic, real-world use case for how this might work.
+
