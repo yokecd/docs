@@ -1,8 +1,7 @@
 ---
 title: Air Traffic Controller
 ---
-
-import { Code } from '@astrojs/starlight/components';
+import { Code } from '@astrojs/starlight/components'
 
 ## Overview
 
@@ -10,7 +9,7 @@ The Air Traffic Controller (ATC) is a Kubernetes controller that enables the cre
 
 ### The Problem with Current Deployment Tools
 
-#### Client-Side Package Managers:
+#### Client-Side Package Managers
 
 Yoke introduces an innovative "packages as code" model, shareable as WASM executables. However, client-side package managers are limited in Kubernetes environments. These tools:
 
@@ -19,7 +18,7 @@ Yoke introduces an innovative "packages as code" model, shareable as WASM execut
 
 Such reliance on tool-specific implementations makes managing packages less transparent and harder to standardize.
 
-#### Limitations of ArgoCD:
+#### Limitations of ArgoCD
 
 Tools like ArgoCD rely on generic container resources (e.g., Argo Applications), which offer flexibility but introduce challenges:
 
@@ -73,7 +72,13 @@ First let's define a Go package containing our new Custom Resource type.
 
 **source:** [atc/backend/v1/backend.go](https://github.com/yokecd/examples/tree/main/atc/backend/v1/backend.go)
 
-<Code lang="go" code={await fetch('https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/backend.go').then(resp => resp.text())} title="backend.go" />
+<Code
+  lang="go"
+  code={await fetch('<https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/backend.go').then(>
+    resp => resp.text()
+  )}
+  title="backend.go"
+/>
 
 Next we will want to implement a program to transform this resource into an array of resources.
 
@@ -81,7 +86,13 @@ Note that nothing in our example implementation is specific to backends or any t
 
 **source:** [atc/backend/v1/flight/main.go](https://github.com/yokecd/examples/tree/main/atc/backend/v1/flight/main.go)
 
-<Code lang="go" code={await fetch('https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/flight/main.go').then(resp => resp.text())} title="flight/main.go" />
+<Code
+  lang="go"
+  code={await fetch(
+    '<https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/v1/flight/main.go>'
+  ).then(resp => resp.text())}
+  title="flight/main.go"
+/>
 
 The flight executable can now be built via the Go Toolchain:
 
@@ -92,16 +103,23 @@ GOOS=wasip1 GOARCH=wasm go build ./path/to/main
 Where and how you choose to host this binary such that it is fetchable by the ATC controller is up to you. Common choices include:
 
 - In a public or private github release
+- In a container registry
 - In an internal service you deploy in your cluster
 - Any service that hosts assets for you and allows you to fetch them over http/https.
 
-Since we are following the example from the **yokecd/examples** repository, we will be using the latest github release of this flight: **https://github.com/yokecd/examples/releases/download/latest/atc_backend_v1_flight.wasm.gz**
+Since we are following the example from the **yokecd/examples** repository, we will be using the latest github release of this flight: **<https://github.com/yokecd/examples/releases/download/latest/atc_backend_v1_flight.wasm.gz>**
 
 Now all that's left is to build an Airway using our **v1.Backend** type in conjunction with our Flight. Let's define it in code.
 
 **source:** [atc/backend/airway/main.go](https://github.com/yokecd/examples/tree/main/atc/backend/airway/main.go)
 
-<Code lang="go" code={await fetch('https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/airway/main.go').then(resp => resp.text())} title="airway/main.go" />
+<Code
+  lang="go"
+  code={await fetch(
+    '<https://raw.githubusercontent.com/yokecd/examples/refs/heads/main/atc/backend/airway/main.go>'
+  ).then(resp => resp.text())}
+  title="airway/main.go"
+/>
 
 With this final piece we have built a flight that installs the Airway that will bind our Backend resource to its implementing flight. Fortunately for the rest of this example, it is also hosted in the github release of our examples repository.
 
@@ -145,14 +163,14 @@ To enable resource-specific flight implementation updates, you can override the 
 The ATC will use the module located at the specified URL and apply it to the custom resource. For example, you can add the annotation as shown below:
 
 ```bash
-kubectl apply -f - <<EOF 
-apiVersion: examples.com/v1 
+kubectl apply -f - <<EOF
+apiVersion: examples.com/v1
 kind: Backend
-metadata: 
-  name: nginx 
-  annotations: 
-    overrides.yoke.cd/flight: http://path/to/development/module.wasm 
-spec: ... 
+metadata:
+  name: nginx
+  annotations:
+    overrides.yoke.cd/flight: http://path/to/development/module.wasm
+spec: ...
 EOF
 ```
 
@@ -185,7 +203,6 @@ A converter program reads a conversion review object, as defined in the conversi
 
 An example conversion program written in Go can be found within the [yoke](https://github.com/yokecd/yoke) project [here](https://github.com/yokecd/yoke/blob/56a7bbced2aff4a3862a95b609bf49732a455ae0/cmd/atc/internal/testing/apis/backend/converter/main.go#L1-L179).
 
-
 ## Using Private Flights
 
 Private flights are backed by Container Registries, and yoke uses docker credentials in order to authenticate to them.
@@ -214,7 +231,7 @@ cat <<EOF
 } > config.json
 EOF
 
-# Create a docker-registry secret from the docker config we generated. 
+# Create a docker-registry secret from the docker config we generated.
 # Here it is called "registry" but you can choose any name you see fit.
 kubectl create secret docker-registry registry --from-file=config.json
 
@@ -224,3 +241,4 @@ yoke takeoff atc oci://ghcr.io/yokecd/atc-installer:latest <<EOF
 dockerConfigSecretName: registry
 EOF
 ```
+
