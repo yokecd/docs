@@ -1,7 +1,5 @@
 ---
-title: yokecd
-sidebar:
-  order: 6
+title: YokeCD
 ---
 
 ## GitOps: Yoke & ArgoCD
