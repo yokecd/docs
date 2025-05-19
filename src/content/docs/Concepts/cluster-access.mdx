@@ -20,12 +20,6 @@ This feature is opt-in during takeoff:
 yoke takeoff --cluster-access foo bar.wasm
 ```
 
-### A Note on Security
-
-Security-conscious users may wonder whether granting Flights access to the cluster introduces a vulnerability. However, Wasm modules do not have direct access to the cluster. Instead, they interact with the host Yoke program, which retrieves the requested resource and returns its JSON representation to the module’s memory. The Wasm module itself **cannot** open sockets, file descriptors, or network connections.
-
-That said, this feature remains opt-in and is recommended for use only with trusted Flights.
-
 ### Example Usage
 
 The ***k8s_lookup*** function is a low-level host export, and users are not expected to call it directly. Instead, Yoke provides a Go package that wraps it in a more user-friendly API: **github.com/yokecd/yoke/pkg/flight/wasi/k8s**.
@@ -42,3 +36,60 @@ export const exampleCode = await fetch('https://raw.githubusercontent.com/yokecd
 export const fileName = 'example.go';
 
 <Code code={exampleCode} lang="go" title={'example.go'} />
+
+### Resource Access Matchers
+
+Yoke is highly security-minded when it comes to cluster access.
+By default, resource lookups are disabled—you cannot query any cluster resources unless access is explicitly enabled.
+Furthermore, you cannot access resources that are not managed by your release.
+While this behavior is generally beneficial, there may be situations where you need to reference cluster state that lies outside your release's scope.
+
+To support this, Yoke provides **Resource Access Matchers**, which allow you to specify exactly which resources should be accessible.
+These matchers can be as granular as necessary; targeting specific resources or as broad as desired, granting access to all resources within a cluster or namespace.
+
+### Resource Access Matcher Format
+
+Resource Access Matchers are strings with the following format: `$namespace/$groupkind:$name`
+
+- Both `namespace` and `name` are optional; if omitted, they default to `*`, which matches anything.
+- `groupkind` is required but can also be set to `*` to match any group and kind.
+- The `groupkind` string follows Kubernetes’ canonical format: `kind.group`.
+
+#### Example Matchers:
+```
+*                                 # matches any resource
+default/*                         # matches any resource in namespace default
+Deployment.apps                   # matches all Deployments in the group "apps"
+default/Deployment.apps:example   # matches deployment named example in namespace default
+```
+
+#### Matcher usage:
+
+When using the Yoke CLI:
+```bash
+# Multiple resource matcher strings can be provided.
+# Repeat the flag or separate them with commas.
+yoke takeoff -resource-access=infra/Configmap:global -resource-access=...
+```
+
+When using Airways:
+```yaml
+apiVersion: yoke.cd/v1alpha1
+kind: Airway
+metadata: ...
+spec:
+  resourceAccessMatchers:
+    - infra/Configmap:global
+    - ...
+  ...
+```
+
+
+### A Note on Security
+
+Security-conscious users may wonder whether granting Flights access to the cluster introduces a vulnerability.
+However, Wasm modules do not have direct access to the cluster.
+Instead, they interact with the host Yoke program, which retrieves the requested resource and returns its JSON representation to the module’s memory.
+The Wasm module itself **cannot** open sockets, file descriptors, or network connections.
+
+That said, this feature remains opt-in and is recommended for use only with trusted Flights.
