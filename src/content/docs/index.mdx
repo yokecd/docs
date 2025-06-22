@@ -68,7 +68,7 @@ It consists of:
 - A server-side controller that allows you to create CustomResourceDefinitions (CRDs) to represent packages natively in Kubernetes.
 - Go packages to facilitate the transition from Helm Charts to Yoke Flights (code packages).
 
-The primary distinction between Yoke and other Kubernetes package managers, such as Helm and Timoni, lies in how Yoke describes packages. In the context of yoke packages are called **Flights** (Flights are to Yoke what Charts are to Helm). Unlike Helm and Timoni, which define packages using YAML, CUE, or other data/configuration languages, **yoke utilizes general-purpose code to describe kubernetes packages**.
+The primary distinction between Yoke and other Kubernetes package managers, such as Helm and Timoni, lies in how Yoke describes packages. In the context of yoke packages are called **Flights** (Flights are to Yoke what Charts are to Helm). Unlike Helm and Timoni, which define packages using YAML, CUE, or other data/configuration languages, **yoke utilizes general-purpose code to describe Kubernetes packages**.
 
 With yoke, **Flights are programs that generate the desired Kubernetes resources in either JSON or YAML format and output them to stdout**. Flights are typically packaged as **[WebAssembly (wasm) executables](/docs/concepts/wasm)**, with Yoke embedding Wazero, a zero-dependency wasm runtime for Go, to execute these programs.
 

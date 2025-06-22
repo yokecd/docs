@@ -6,7 +6,7 @@ title: YokeCD
 
 The Yoke CLI is analogous to the Helm CLI. It is a client-side tool that communicates with your cluster and keeps track of packages deployed to it. However, for many, that is not how we deploy packages anymore. Where the words _Platform Engineering_ are uttered, _GitOps_ is sure to follow.
 
-To that end, we want to be able to write our Flights (programs that encapsulate a set of kubernetes packages as code) and have a continuous deployment tool, such as ArgoCD, manage our resources for us. Out of the box, ArgoCD supports Helm, Jsonnet, and Kustomize. To support more use cases, it accepts extensions via [config management plugins](https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins).
+To that end, we want to be able to write our Flights (programs that encapsulate a set of Kubernetes packages as code) and have a continuous deployment tool, such as ArgoCD, manage our resources for us. Out of the box, ArgoCD supports Helm, Jsonnet, and Kustomize. To support more use cases, it accepts extensions via [config management plugins](https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins).
 
 YokeCD is the official yoke config management plugin for ArgoCD. It allows you to write ArgoCD Applications but have their source evaluated by yoke's embedded wasm interpreter (wazero). The **yokecd plugin** supports a variety of setups:
 
