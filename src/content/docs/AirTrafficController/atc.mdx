@@ -24,7 +24,7 @@ Such reliance on tool-specific implementations makes managing packages less tran
 Tools like ArgoCD rely on generic container resources (e.g., Argo Applications), which offer flexibility but introduce challenges:
 
 - Permission escalation: Users creating Argo applications, either via `kubectl` or Git commits, can bypass organizational RBAC, effectively assuming Argo's deployment permissions.
-- Underuse of Kubernetes API validation: Applications are generic and pass unchecked values to their underlying resource renderer. For example, if using helm, values are unchecked by the kubernetes api and we must rely on chart implementations to validate and surface errors later down the pipeline.
+- Underuse of Kubernetes API validation: Applications are generic and pass unchecked values to their underlying resource renderer. For example, if using helm, values are unchecked by the Kubernetes API and we must rely on chart implementations to validate and surface errors later down the pipeline.
 - Lack of specificity: Applications are deployed as generic resources, obscuring their types and requiring labels or naming conventions to organize and filter them.
 
 ## Goal of the Air Traffic Controller
@@ -77,7 +77,7 @@ First let's define a Go package containing our new Custom Resource type.
 
 Next we will want to implement a program to transform this resource into an array of resources.
 
-Note that nothing in our example implementation is specific to backends or any type of workload. For this example our package will output the backend as a kubernetes Deployment and Service.
+Note that nothing in our example implementation is specific to backends or any type of workload. For this example our package will output the backend as a Kubernetes Deployment and Service.
 
 **source:** [atc/backend/v1/flight/main.go](https://github.com/yokecd/examples/tree/main/atc/backend/v1/flight/main.go)
 

@@ -6,7 +6,7 @@ sidebar:
 
 ## Overview
 
-Although Yoke has the potential to change how we write Kubernetes Packages, as of today and for the past almost 10 years, kubernetes package management has been dominated by [Helm](https://helm.sh). Yoke has no chance of succeeding if it cannot build off of Helm and provide a migration path forward.
+Although Yoke has the potential to change how we write Kubernetes Packages, as of today and for the past almost 10 years, Kubernetes package management has been dominated by [Helm](https://helm.sh). Yoke has no chance of succeeding if it cannot build off of Helm and provide a migration path forward.
 
 At its core, a Yoke Flight is a piece of software that generates Kubernetes resources. In that way, even a Helm Chart is a subset of Flights. From that vantage point, our Flight needs to accomplish two things to be compatible with Helm:
 
