@@ -25,17 +25,20 @@ To be compatible with ArgoCD, Yoke offers an ArgoCD CPM Sidecar Docker image hos
 
 The yoke project maintains a Flight called the **yokecd-installer** that wraps the [ArgoCD Chart 7.7.16](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-7.7.16). The Flight patches the argocd-repo-server by adding the yokecd sidecar to it, thus rendering the plugin available to argocd applications.
 
-To configure the yokecd-installer you can pass a yaml or json document over stdin:
+To configure the `yokecd-installer` you can pass a YAML or JSON document over stdin:
 
 ```yaml
-version: 0.6.0 # default is "latest"
-argocd: {} # values are passed directly to the argocd chart.
+// values.yaml
+image: ghcr.io/yokecd/yokecd    # default
+version: 0.6.0                  # default is "latest"
+dockerAuthSecretName: my-secret # see below
+argocd: {}                      # values are passed directly to the argocd chart
 ```
 
 Ready for takeoff?
 
 ```bash
-yoke takeoff --create-namespace --namespace argocd yokecd oci://ghcr.io/yokecd/yokecd-installer:latest
+yoke takeoff --create-namespace --namespace argocd yokecd oci://ghcr.io/yokecd/yokecd-installer:latest < values.yaml
 ```
 
 ### Patch an Existing ArgoCD Installation
@@ -78,6 +81,47 @@ Once your file is created, let's call it `patch.yaml`, we can now proceed to pat
 kubectl patch deployments/argocd-repo-server --namespace=argocd --patch-file=patch.yaml
 ```
 
+### Docker auth secret
+If your Flights are in a private repository, or generally behind a Docker login, you need to create a Docker auth config. To do this, first manually create a Kubernetes Secret with the given credentials:
+
+```bash
+kubectl create secret docker-registry -n $ARGOCD_NAMESPACE \
+  $SECRET_NAME \
+  --docker-username=$USERNAME \
+  --docker-server=$URL \
+  --docker-password=$PASSWORD 
+```
+
+Then, either use the `dockerAuthSecretName` parameter for `yokecd-installer`:
+
+```yaml
+// values.yaml
+dockerAuthSecretName: $SECRET_NAME
+```
+
+Or add the additional configuration to the `argo-repo-server` Deployment patch defined above (keep the rest of the patch file!):
+
+```yaml
+// patch.yaml
+# ...
+spec:
+  template:
+    containers:
+      - name: yokecd
+        # ...
+        volumeMounts:
+          - name: docker-auth-secret
+            mountPath: /docker/config.json
+            subPath: .dockerconfigjson
+        env:
+          - name: DOCKER_CONFIG
+            value: /docker
+    volumes:
+      - name: docker-auth-secret
+        secret:
+          secretName: $SECRET_NAME
+```
+
 ## Creating YokeCD Applications
 
 YokeCD applications are normal ArgoCD Applications that use the yokecd plugin.
@@ -102,13 +146,27 @@ In order to use and configure the plugin, we must pass parameters to it. The fol
 
 | Parameter | Type    | Description                                                                                                      |
 |-----------|---------|------------------------------------------------------------------------------------------------------------------|
-| wasm      | string  | The url to download or the relative location in the source repository to the Flight's wasm asset. Cannot be used when parameter **build** is enabled. |
-| build     | string  | A boolean string signalling that the wasm should be compiled on the fly by yokecd using the Go Toolchain in the context of the Application's source. Cannot be used with parameter **wasm**. |
-| input     | string  | The input that will be passed as stdin to the wasm executable upon execution.                                    |
-| args      | []string| The args that will be passed to the Flight Executable upon execution.                                            |
+| `wasm`      | string  | The url to download or the relative location in the source repository to the Flight's wasm asset. Cannot be used when parameter `build` is enabled. |
+| `build`     | string  | A boolean string signalling that the wasm should be compiled on the fly by yokecd using the Go Toolchain in the context of the Application's source. Cannot be used with parameter `wasm`. |
+| `input`     | string  | The input that will be passed as stdin to the wasm executable upon execution. This has top-most priority over other `input` parameters                                    |
+| `input`     | map[string]string | A simple map of values to be passed to the underlying Flight on stdin |
+| `inputFiles` | []string | An array of paths for files to be used as parameters of the underlying Flight |
+| `args`      | []string| The args that will be passed to the Flight Executable upon execution.                                            |
 
 **One of build or wasm must be specified.**
 
+#### Note on the input parameters
+In order to make the plugin flexible, similarly to how Helm handles values, we support a hierarchy of input parameters. In order of precedence (most precedent to least):
+```
+input (string) >> input (map) > inputFiles (latter elements > former elements)
+```
+That means, that:
+- `input` parameter with type `string` will just override anything else, without any processing
+- parameter `inputFiles` will read all listed files (YAML or JSON), internally parse them and merge them, together with `input` of type `map`, **encode into JSON** and pass it on stdin to the underlying Flight
+
+So in order for your Flight to respect these parameters, it should read your desired parameter structure as JSON from stdin and work with that.
+
+### Example
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -145,8 +203,22 @@ spec:
         - name: args
           array: ["--key=value", "positional-arg"]
 
+        # this will override any other `input*` parameters, do not combine them
         - name: input
           string: 'any-input-you-want'
+
+        # these files will be read relative to the source URL, path, revision
+        # in this case `https://github.com/davidmdm/yokecd-demo/cmd/pg/{values.yaml, overrides.json}`
+        - name: inputFiles
+          array:
+            - values.yaml
+            - overrides.json
+
+        # you can use this parameter to override anything read from `inputFiles` too. Note that it is map[string]string, so just 1 level of YAML, no nested properties
+        - name: input
+          map:
+            another: simple
+            override: foo
 
   destination:
     name: in-cluster
