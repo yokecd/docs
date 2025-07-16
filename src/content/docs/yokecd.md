@@ -149,11 +149,11 @@ In order to use and configure the plugin, we must pass parameters to it. The fol
 | `wasm`      | string  | The url to download or the relative location in the source repository to the Flight's wasm asset. Cannot be used when parameter `build` is enabled. |
 | `build`     | string  | A boolean string signalling that the wasm should be compiled on the fly by yokecd using the Go Toolchain in the context of the Application's source. Cannot be used with parameter `wasm`. |
 | `input`     | string  | The input that will be passed as stdin to the wasm executable upon execution. This has top-most priority over other `input` parameters                                    |
-| `input`     | map[string]string | A simple map of values to be passed to the underlying Flight on stdin |
+| `input`     | map[string]string | A map of values or overrides to be passed to the underlying Flight on stdin. Supports a variant of JSON path as keys, and also complex YAML/JSON values as values |
 | `inputFiles` | []string | An array of paths for files to be used as parameters of the underlying Flight |
 | `args`      | []string| The args that will be passed to the Flight Executable upon execution.                                            |
 
-**One of build or wasm must be specified.**
+**One of `build` or `wasm` must be specified.**
 
 #### Note on the input parameters
 In order to make the plugin flexible, similarly to how Helm handles values, we support a hierarchy of input parameters. In order of precedence (most precedent to least):
@@ -175,12 +175,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
-
+  destination:
+    name: in-cluster
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
   source:
     repoURL: https://github.com/davidmdm/yokecd-demo
     path: ./cmd/pg
     targetRevision: main
-
     plugin:
       name: yokecd
       parameters:
@@ -214,21 +219,63 @@ spec:
             - values.yaml
             - overrides.json
 
-        # you can use this parameter to override anything read from `inputFiles` too. Note that it is map[string]string, so just 1 level of YAML, no nested properties
+        # you can use this parameter to override anything read from `inputFiles` or add new properties
+        # for examples, see below
         - name: input
           map:
             another: simple
             override: foo
-
-  destination:
-    name: in-cluster
-    namespace: default
-
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
 ```
+
+### Input map parameter
+ArgoCD's Content Management Plugin spec limits you in what you can write into the `map` type parameter. By definition, it's a `map[string]string`, meaning you can only use strings as the values, and you cannot put any arbitrary structure into the values directly (like Helm's `valuesObject`). 
+
+However, you can achieve almost the same complexity by utilizing JSON paths and JSON/YAML values, see following example:
+```yaml
+- name: input
+  map:
+    # you can override/add any simple properties
+    property: value
+    newProperty: value
+    # you can override/add nested properties
+    nested.property: value
+    # you can override array elements (with 0-based indices)
+    array.0: value
+    arrayOfObjects.0.property: value
+    # you can append items to arrays with a special `-1` index (only once however, that would lead to duplicate keys in this map)
+    arrayOfObjects.-1.property: value
+    # in order to set more complex values, you can use JSON or YAML format (note the quotes or the `|` character)
+    jsonObject: '{"some": "value"}'
+    jsonObjectMultiline: |
+      {
+        "some": "value"
+      }
+    yamlObject: |
+      some: value
+      nested:
+        value: foo
+    # data types - booleans and numbers have to be quoted, but are parsed as respective types in the output JSON
+    bool: "true"              # will turn into: "bool": true
+    number: "42"              # will turn into: "number": 42
+    # unless double quoted (then they're forced strings)
+    boolString: '"true"'      # will turn into: "boolString": "true"
+    numberString: '"42"'      # will turn into: "numberString": "42"
+    # in YAML/JSON, the string quoting on booleans/numbers works normally, no need for additional quoting
+    jsonTypes: |
+      {
+        "bool": true,
+        "boolString": "true",
+        "num": 42,
+        "numString": "42"
+      }
+    yamlTypes: |
+      bool: true
+      boolString: "true"
+      num: 42
+      numString: "42"
+
+```
+For more examples of the JSON path syntax, see https://github.com/tidwall/sjson/
 
 ## YokeCD Service Catalog
 
