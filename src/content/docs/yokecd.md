@@ -28,10 +28,16 @@ The yoke project maintains a Flight called the **yokecd-installer** that wraps t
 To configure the `yokecd-installer` you can pass a YAML or JSON document over stdin:
 
 ```yaml
-// values.yaml
+# values.yaml
 image: ghcr.io/yokecd/yokecd    # default
-version: 0.6.0                  # default is "latest"
+version: 0.15.0                 # default is "latest"
 dockerAuthSecretName: my-secret # see below
+yokecd:
+  resources: {}                 # normal limits and requests for the yokecd-plugin container.
+yokecdServer:
+  cacheTTL: 1h                  # default is 24h. Setting it to 0 reduces the cache to its collection time
+  cacheCollectionInterval: 5s   # default is 10s. This is the interval at which the cache will check and remove wasm modules from memory
+  resources: {}                 # normal limits and requests for the yokecd-server container
 argocd: {}                      # values are passed directly to the argocd chart
 ```
 
@@ -43,7 +49,7 @@ yoke takeoff --create-namespace --namespace argocd yokecd oci://ghcr.io/yokecd/y
 
 ### Patch an Existing ArgoCD Installation
 
-If you already have an existing ArgoCD installation you must patch the argocd-repo-server with the yokecd sidecar image. To do so create the following manifest substituting any names to match your deployment:
+If you already have an existing ArgoCD installation you must patch the argocd-repo-server with the yokecd sidecar image. To do so, create the following manifest, substituting any names to match your deployment:
 
 ```yaml
 apiVersion: apps/v1
@@ -57,7 +63,7 @@ spec:
       containers:
         - name: yokecd
           image: ghcr.io/yokecd/yokecd:latest # or any version you prefer
-          imagePullPolicy: IfNotPresent # use the imagePullPolicy that best fits your needs.
+          imagePullPolicy: IfNotPresent # use the imagePullPolicy that best fits your needs
           command:
             - /var/run/argocd/argocd-cmp-server
           securityContext: # required by argocd cmp spec. Must be user 999.
@@ -70,6 +76,21 @@ spec:
               mountPath: /home/argocd/cmp-server/plugins
             - name: cmp-tmp
               mountPath: /tmp
+        - name: yokecd-svr
+          image: ghcr.io/yokecd/yokecd:latest # or any version you prefer
+          imagePullPolicy: IfNotPresent # use the imagePullPolicy that best fits your needs
+          command:
+            - yokecd
+            - '-svr'
+          env:
+            # control the time-to-live of your modules
+            - name: YOKECD_CACHE_TTL
+              value: 24h
+            # controls the interval at which the cache is pruned
+            # this corresponds to the maximum amount of time an expired module may stay in memory before being removed
+            # also serves as a debounce window for concurrent module invocations even when the cache ttl is set to 0.
+            - name: YOKECD_CACHE_COLLECTION_INTERVAL
+              value: 10s
       volumes:
         - name: cmp-tmp
           emptyDir: {}
@@ -296,3 +317,24 @@ services
 ```
 
 Other setups are possible, and any service repository can be mixed and matched with regular ArgoCD Applications.
+
+## ArgoCD Config Management Plugin Architecture Overview
+
+ArgoCD allows users to extend its manifest generation capabilities via [config management plugins](https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/).
+These work by adding a new sidecar container to the `argocd-repo-server`, providing the required transformation logic.
+
+The plugin image must include the gRPC server provided by ArgoCD,
+along with a plugin manifest that defines the command used to generate manifests from an application.
+
+A fundamental limitation of this design is that the plugin process is short-lived — it runs, writes resources to stdout, and exits.
+
+For Yoke, a system that relies on external WASM modules to represent package logic, this presents a problem. Every sync would require downloading and compiling the WASM module, which can lead to slow syncs, sometimes several seconds, depending on the binary size.
+
+What we really want is a long-lived service that can handle module fetching, compilation, caching, and execution.
+
+That’s why the YokeCD plugin is installed as two containers:
+
+- A **plugin container**, which invokes the `yokecd` binary in plugin mode for each sync request.
+- A **server container** (`yokecd-server`), which runs a persistent HTTP service responsible for managing and executing WASM modules.
+
+This design enables module caching across syncs, significantly reducing average sync time for Yoke-backed applications — from several seconds down to tens of milliseconds.
