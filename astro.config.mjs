@@ -16,10 +16,18 @@ export default defineConfig({
         light: './src/assets/logo/SVG/Logo_Yoke_.svg',
         replacesTitle: true,
       },
-      social: {
-        github: 'https://github.com/yokecd/yoke',
-        discord: 'https://discord.com/invite/tHCRKg6s7Z',
-      },
+      social: [
+        {
+          href: 'https://github.com/yokecd/yoke',
+          icon: 'seti:github',
+          label: 'github',
+        },
+        {
+          href: 'https://discord.com/invite/tHCRKg6s7Z',
+          icon: 'discord',
+          label: 'discord',
+        },
+      ],
       sidebar: [
         {
           label: 'Concepts',
