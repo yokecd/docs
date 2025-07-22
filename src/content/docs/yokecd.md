@@ -128,7 +128,9 @@ Or add the additional configuration to the `argo-repo-server` Deployment patch d
 spec:
   template:
     containers:
-      - name: yokecd
+      # make sure you are adding the mount to the server component
+      # as it is responsible for pulling the WASM modules
+      - name: yokecd-svr
         # ...
         volumeMounts:
           - name: docker-auth-secret
