@@ -175,6 +175,8 @@ In order to use and configure the plugin, we must pass parameters to it. The fol
 | `input`     | map[string]string | A map of values or overrides to be passed to the underlying Flight on stdin. Supports a variant of JSON path as keys, and also complex YAML/JSON values as values |
 | `inputFiles` | []string | An array of paths for files to be used as parameters of the underlying Flight |
 | `args`      | []string| The args that will be passed to the Flight Executable upon execution.                                            |
+| `clusterAccess` | string | A boolean string that allows the flight to have [cluster-access](/concepts/cluster-access/). |
+| `resourceMatchers` | []string | Array of resource matchers that extend cluster-access to resources outside of the current application. Ignored if cluster-access is not enabled. |
 
 **One of `build` or `wasm` must be specified.**
 
