@@ -11,6 +11,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'yoke',
+      customCss: ['./src/styles/custom.css'],
       logo: {
         dark: './src/assets/logo/SVG/Logo_Yoke_White__Logo_Yoke_.svg',
         light: './src/assets/logo/SVG/Logo_Yoke_.svg',
