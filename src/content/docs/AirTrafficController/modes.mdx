@@ -96,6 +96,12 @@ And that’s it. When a Secret changes in an external source, the following occu
 
 The same effect would occur if we updated the Secret directly via `kubectl`, but this example offers a more realistic, real-world use case for how this might work.
 
+### A note on external-resources
+
+Prior to version 0.15.8 of the AirTrafficController, updates to external resources, Kubernetes resources outside of your current instance package but referenced via [resource matchers](/docs/concepts/cluster-access/#resource-access-matchers), did not trigger a re-evaluation of the flight.
+
+As of version 0.15.8, any external resource that is looked up will now trigger a re-evaluation of the instance on update or deletion. This allows flights to react to changes in external state and keep in sync with resources elsewhere in the cluster.
+
 ## Overrides
 
 Modes are described at the Airway level. However sometimes we may want to change the mode for a specific package without affecting all resources associated with our Airway.

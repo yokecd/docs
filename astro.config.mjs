@@ -56,7 +56,11 @@ export default defineConfig({
         },
         {
           label: 'Air Traffic Controller',
-          items: [{ slug: 'airtrafficcontroller/atc' }, { slug: 'airtrafficcontroller/modes' }],
+          items: [
+            { slug: 'airtrafficcontroller/atc' },
+            { slug: 'airtrafficcontroller/modes' },
+            { slug: 'airtrafficcontroller/orchestration' },
+          ],
         },
         { slug: 'yokecd' },
         { slug: 'video' },
