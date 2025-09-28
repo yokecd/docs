@@ -1,0 +1,39 @@
+---
+title: Orchestration
+---
+
+At its core, the AirTrafficController (ATC) was conceived to enable the deployment of packages as custom resources in your cluster.
+
+Beyond this, it includes a set of primitive features that together enable flexible and robust resource orchestration:
+
+- Dynamic Mode  
+- Cluster Access  
+- Resource Access Matchers  
+- Custom Resource Status Updates  
+
+Classic Kubernetes application management tools have offered little support for orchestration.  
+Here, we define *orchestration* as the ability to express relationships between resources in a release or package, specifically in terms of order, coordination, and state.
+
+The reason for this gap is historical: packaging tools like **Helm** and **Kustomize** are client-side manifest generators.  
+They encourage the idea that Kubernetes applications are simply flat lists of YAML manifests.  
+Even server-side deployment tools like **ArgoCD** or **FluxCD** are limited in this regard, as they share the same worldview and ultimately deploy packages through these formats.
+
+> **Note**  
+> Tools like Helm and ArgoCD support limited forms of orchestration, for example, Helm pre/post-install hooks or ArgoCD sync waves.  
+> However, these approaches are shallow: they don’t persist throughout the lifetime of the application.
+
+Traditionally, if you needed intelligent, reactive, and orchestrated application deployment strategies, the solution was to build a custom operator.  
+While valid, this approach comes with technical challenges, as well as development and maintenance costs that not every team or organization is ready to take on.
+
+Yoke does not suffer from this issue as it operates with a completely different model, one where applications are defined by executable code. It lets you focus on *application orchestration* by writing a program that:  
+
+1. Reads the input (the desired state of the custom resource).
+2. Reads live state from the cluster.  
+3. Updates the resource’s status.  
+4. Emits the desired resources to be applied to the cluster.
+
+As the system evolves, statuses update, jobs complete, deployments become ready, secrets change, and so on, your program is automatically re-evaluated.  
+This allows you to orchestrate your package’s lifecycle, synchronize data, and react dynamically to the state of the cluster.
+
+
+
