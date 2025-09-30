@@ -2,7 +2,7 @@
 title: Orchestration
 ---
 
-At its core, the AirTrafficController (ATC) was conceived to enable the deployment of packages as custom resources in your cluster.
+At its core, the AirTrafficController (ATC) was designed to enable the deployment of packages as custom resources in your cluster.
 
 Beyond this, it includes a set of primitive features that together enable flexible and robust resource orchestration:
 
@@ -32,9 +32,10 @@ Yoke does not suffer from this issue as it operates with a completely different 
 3. Updates the resource’s status.  
 4. Emits the desired resources to be applied to the cluster.
 
-As the system evolves, statuses update, jobs complete, deployments become ready, secrets change, and so on, your program is automatically re-evaluated.  
-This allows you to orchestrate your package’s lifecycle, synchronize data, and react dynamically to the state of the cluster.
+If the above sounds like the text-book definition of a controller to you, that's because it is. The ATC is a controller whose job is to reconcile desired package state. That state is defined by executing WASM modules provided by the user. In this way the WASM Module is a proxy for our classic reconciliation loop.
 
+
+---
 
 ## Examples
 
@@ -42,9 +43,88 @@ The following examples are written in Go to take advantage of the Kubernetes WAS
 
 > If an SDK does not exist in your preferred WASM compatible language, please open an issue to help track its development.
 
-#### A Job Pipeline
+### A Job Pipeline
 
 This example represents a custom resource called `Pipeline`. Instances of this resource trigger multiple jobs to be done sequentially and the state of the current job is reported back to the pipeline resource.
+
+When working with Airways, the first thing to do is to create our **type** to represent our CustomResource.
+
+```go
+type Pipeline struct {
+  metav1.TypeMeta
+  metav1.ObjectMeta `json:"metadata"`
+  Spec              struct {
+    // ... Your fields ...
+  } `json:"spec,omitzero"`
+  Status struct {
+    // Your status fields.
+    // We will use a simple msg for our example but it can be whatever you wish it to be.
+    Msg string `json:"msg"`
+  }
+}
+```
+
+We can then use this type in our Flight implementation but also to generate our Airway definition and OpenAPI.
+
+```go
+package main
+
+import (
+  "encoding/json"
+  "os"
+  "reflect"
+
+  apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+  "github.com/yokecd/yoke/pkg/apis/airway/v1alpha1"
+  "github.com/yokecd/yoke/pkg/openapi"
+)
+
+func main() {
+  json.NewEncoder(os.Stdout).Encode(v1alpha1.Airway{
+    TypeMeta: metav1.TypeMeta{
+      APIVersion: v1alpha1.AirwayGVR().GroupVersion().Identifier(),
+      Kind:       v1alpha1.KindAirway,
+    },
+    ObjectMeta: metav1.ObjectMeta{
+      Name: "pipelines.examples.com",
+    },
+    Spec: v1alpha1.AirwaySpec{
+      WasmURLs: v1alpha1.WasmURLs{
+        // The URL where your wasm module will be hosted.
+        Flight: "oci://registry/repo:tag",
+      },
+      // In order to be able to fetch state we enable cluster access.
+      ClusterAccess: true,
+      // The Airway needs to by dynamic in order to be re-evaluated when sub-resources are updated/created.
+      Mode: v1alpha1.AirwayModeDynamic,
+      Template: apiextensionsv1.CustomResourceDefinitionSpec{
+        Group: "examples.com",
+        Names: apiextensionsv1.CustomResourceDefinitionNames{
+          Plural:   "pipelines",
+          Singular: "pipeline",
+          Kind:     "Pipeline",
+        },
+        Scope: apiextensionsv1.NamespaceScoped,
+        Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+          {
+            Name:    "v1",
+            Served:  true,
+            Storage: true,
+            Schema: &apiextensionsv1.CustomResourceValidation{
+              // Build the openapi definition from our CustomResource type.
+              OpenAPIV3Schema: openapi.SchemaFrom(reflect.TypeFor[Pipeline]()),
+            },
+          },
+        },
+      },
+    },
+  })
+}
+```
+
+Now all that remains is to write the module that will determine our desired state for our `Pipeline` resource.
 
 ```go
 package main
@@ -62,19 +142,6 @@ import (
   "github.com/yokecd/yoke/pkg/flight"
   "github.com/yokecd/yoke/pkg/flight/wasi/k8s"
 )
-
-type Pipeline struct {
-  metav1.TypeMeta
-  metav1.ObjectMeta `json:"metadata"`
-  Spec              struct {
-    // ... Your fields ...
-  } `json:"spec,omitzero"`
-  Status struct {
-    // Your status fields.
-    // We will use a simple msg for our example but it can be whatever you wish it to be.
-    Msg string `json:"msg"`
-  }
-}
 
 func main() {
   if err := run(); err != nil {
@@ -157,13 +224,96 @@ func hasJobCompleted(pipeline *Pipeline, job *batchv1.Job) (ok bool, err error) 
 }
 ```
 
-#### Coordinating with external secrets
+### Coordinating with external secrets
 
 Sometimes we may want our application to wait on other resources to be created before moving on to other deployment phases.
 
 > Note that today for this scenario we use eventual consistency, allowing certain resources or workloads to be in `crashlookBackoff` until all resources are met.
 
-The following example creates a SQL Database Instance using crossplane and waits for its connection secret to be created before attempting create a deployment.
+The following example creates a SQL Database Instance using crossplane and waits for its connection secret to be created before attempting to create a deployment.
+
+To begin, like before we start with a Custom Resource type. This type we will model some generic application.
+
+```go
+type App struct {
+  metav1.TypeMeta
+  metav1.ObjectMeta `json:"metadata"`
+  Spec              struct {
+    // Your props
+  } `json:"spec"`
+  Status struct {
+    // For the example we will use a simple message for our App status.
+    // You can include any data you see fit.
+    Msg string `json:"msg"`
+  } `json:"status,omitzero"`
+}
+```
+
+And follow it up by defining its corresponding Airway.
+
+```go
+package main
+
+import (
+  "encoding/json"
+  "os"
+  "reflect"
+
+  apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+  "github.com/yokecd/yoke/pkg/apis/airway/v1alpha1"
+  "github.com/yokecd/yoke/pkg/openapi"
+)
+
+func main() {
+  json.NewEncoder(os.Stdout).Encode(v1alpha1.Airway{
+    TypeMeta: metav1.TypeMeta{
+      APIVersion: v1alpha1.AirwayGVR().GroupVersion().Identifier(),
+      Kind:       v1alpha1.KindAirway,
+    },
+    ObjectMeta: metav1.ObjectMeta{
+      Name: "pipelines.examples.com",
+    },
+    Spec: v1alpha1.AirwaySpec{
+      WasmURLs: v1alpha1.WasmURLs{
+        // The URL where your wasm module will be hosted.
+        Flight: "oci://registry/repo:tag",
+      },
+      // In order to be able to fetch state we enable cluster access.
+      ClusterAccess: true,
+      // We know that our application will depend on external secrets generated by Crossplane.
+      // By default no external resources can be looked up. To enable this lookup we use resource access matchers.
+      // for more info on resource matchers: https://yokecd.github.io/docs/concepts/cluster-access/#resource-access-matchers
+      ResourceAccessMatchers: []string{"Secret"},
+      // The Airway needs to by dynamic in order to be re-evaluated when sub-resources are updated/created.
+      Mode: v1alpha1.AirwayModeDynamic,
+      Template: apiextensionsv1.CustomResourceDefinitionSpec{
+        Group: "examples.com",
+        Names: apiextensionsv1.CustomResourceDefinitionNames{
+          Plural:   "apps",
+          Singular: "app",
+          Kind:     "App",
+        },
+        Scope: apiextensionsv1.NamespaceScoped,
+        Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+          {
+            Name:    "v1",
+            Served:  true,
+            Storage: true,
+            Schema: &apiextensionsv1.CustomResourceValidation{
+              // Build the openapi definition from our CustomResource type.
+              OpenAPIV3Schema: openapi.SchemaFrom(reflect.TypeFor[App]()),
+            },
+          },
+        },
+      },
+    },
+  })
+}
+```
+
+Next we build the logic for our module.
 
 ```go
 package main
@@ -186,19 +336,6 @@ import (
   "github.com/yokecd/yoke/pkg/flight/wasi/k8s"
 )
 
-type App struct {
-  metav1.TypeMeta
-  metav1.ObjectMeta `json:"metadata"`
-  Spec              struct {
-    // Your props
-  } `json:"spec"`
-  Status struct {
-    // For the example we will use a simple message for our App status.
-    // You can include any data you see fit.
-    Msg string `json:"msg"`
-  } `json:"status,omitzero"`
-}
-
 func main() {
   if err := run(); err != nil {
     fmt.Fprintln(os.Stderr, err)
@@ -212,8 +349,13 @@ func run() error {
     return fmt.Errorf("failed to decode stdin into App instance: %v", err)
   }
 
+  // include the app itself in the final json result. This allows us to set its status.
+  // this resource is special as the ATC knows its the identity of the top-level parent.
+  // You cannot set status properties for other resources.
   resources := flight.Resources{&app}
 
+  // Create the database instance using the crossplane project.
+  // Most fields are omitted for brevity.
   database := databasev1beta1.CloudSQLInstance{
     TypeMeta: metav1.TypeMeta{
       APIVersion: databasev1beta1.SchemeGroupVersion.Identifier(),
@@ -244,7 +386,7 @@ func run() error {
     Kind:       "Secret",
   }
 
-  // Although we we have not added this secret to our package, any external resource that we lookup will automatically 
+  // Although we we have not added this secret to our package's state, any external resource that we lookup will automatically 
   // be tracked and our instance will be re-evaluated on any create/update/delete event to this resource.
   secret, err := k8s.Lookup[corev1.Secret](secretIdentifier)
   if err != nil {
@@ -255,6 +397,7 @@ func run() error {
     return fmt.Errorf("failed to fetch connection secret: %w", err)
   }
 
+  // We create the deployment only after the secret has been created.
   deployment := &appsv1.Deployment{
     TypeMeta: metav1.TypeMeta{
       APIVersion: appsv1.SchemeGroupVersion.Identifier(),
@@ -286,6 +429,8 @@ func run() error {
   }
 
   resources = append(resources, deployment)
+
+  // As a final task, we can report on the status of the deployment.
 
   liveDeployment, err := k8s.LookupResource(deployment)
   if err != nil && !k8s.IsErrNotFound(err) {
