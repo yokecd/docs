@@ -239,6 +239,10 @@ func hasJobCompleted(pipeline *Pipeline, job *batchv1.Job) (ok bool, err error) 
 }
 ```
 
+The above program returns an updated state of the desired instance like so:
+
+![pipeline-example-flow](../../../assets/pipeline-example.svg)
+
 ### Coordinating with external secrets
 
 Sometimes we may want our application to wait on other resources to be created before moving on to other deployment phases.
