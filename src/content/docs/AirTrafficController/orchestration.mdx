@@ -11,7 +11,7 @@ Beyond this, it includes a set of primitive features that together enable flexib
 - Resource Access Matchers  
 - Custom Resource Status Updates  
 
-Classic Kubernetes application management tools have offered little support for orchestration.  
+Classic Kubernetes application management tools, such as Helm and Kustomize, have offered little support for orchestration.  
 Here, we define *orchestration* as the ability to express relationships between resources in a release or package, specifically in terms of order, coordination, and state.
 
 The reason for this gap is historical: packaging tools like **Helm** and **Kustomize** are client-side manifest generators.  
@@ -22,7 +22,8 @@ Even server-side deployment tools like **ArgoCD** or **FluxCD** are limited in t
 > Tools like Helm and ArgoCD support limited forms of orchestration, for example, Helm pre/post-install hooks or ArgoCD sync waves.  
 > However, these approaches are shallow: they don’t persist throughout the lifetime of the application.
 
-Traditionally, if you needed intelligent, reactive, and orchestrated application deployment strategies, the solution was to build a custom operator.  
+Traditionally, if you needed intelligent, reactive, and orchestrated application deployment strategies, the solution was to build a custom operator.
+
 While valid, this approach comes with technical challenges, as well as development and maintenance costs that not every team or organization is ready to take on.
 
 Yoke does not suffer from this issue as it operates with a completely different model, one where applications are defined by executable code. It lets you focus on *application orchestration* by writing a program that:  
@@ -34,6 +35,20 @@ Yoke does not suffer from this issue as it operates with a completely different 
 
 If the above sounds like the text-book definition of a controller to you, that's because it is. The ATC is a controller whose job is to reconcile desired package state. That state is defined by executing WASM modules provided by the user. In this way the WASM Module is a proxy for our classic reconciliation loop.
 
+## How it works
+
+Classically a flight is just a program that reads inputs over `stdin` and returns kubernetes resources over `stdout`.
+This sounds static, but in the case of the ATC since we are running in a control-loop we are able to control our desired state of our package/instance over its lifetime.
+
+Our instance is re-evaluated whenever either of the following conditions are met:
+
+- a resource managed by our instance is updated or deleted. This includes their status properties.
+- whenever an external resource we [lookup](/docs/concepts/cluster-access/) is created, updated, or deleted. This includes their status properties.
+
+Finally, we can report the status of our instance by returning our top-level custom resource in our output with the status properties we desire.
+This is a special use-case, as the top-level instance resource is optional.
+
+Including it or not in the desired state of the package is not required and serves only as an instruction for the ATC to update its status.
 
 ---
 
@@ -47,7 +62,7 @@ The following examples are written in Go to take advantage of the Kubernetes WAS
 
 This example represents a custom resource called `Pipeline`. Instances of this resource trigger multiple jobs to be done sequentially and the state of the current job is reported back to the pipeline resource.
 
-When working with Airways, the first thing to do is to create our **type** to represent our CustomResource.
+When working with Airways, the first thing to do is to create our **type** to represent our custom resource.
 
 ```go
 type Pipeline struct {
@@ -232,7 +247,7 @@ Sometimes we may want our application to wait on other resources to be created b
 
 The following example creates a SQL Database Instance using crossplane and waits for its connection secret to be created before attempting to create a deployment.
 
-To begin, like before we start with a Custom Resource type. This type we will model some generic application.
+To begin, like before we start with a custom resource type. In this example we will model a generic application.
 
 ```go
 type App struct {
@@ -386,7 +401,7 @@ func run() error {
     Kind:       "Secret",
   }
 
-  // Although we we have not added this secret to our package's state, any external resource that we lookup will automatically 
+  // Although we have not added this secret to our package's state, any external resource that we lookup will automatically 
   // be tracked and our instance will be re-evaluated on any create/update/delete event to this resource.
   secret, err := k8s.Lookup[corev1.Secret](secretIdentifier)
   if err != nil {
