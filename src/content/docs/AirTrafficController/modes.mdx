@@ -96,7 +96,17 @@ And that’s it. When a Secret changes in an external source, the following occu
 
 The same effect would occur if we updated the Secret directly via `kubectl`, but this example offers a more realistic, real-world use case for how this might work.
 
-### A note on external-resources
+#### Instance status
+
+A dynamic Airway instance serves as a control-loop for desired package state. On events to our instance resources (and external ones too) the instance is re-evaluated and a new desired state computed.
+
+In this scenario it is useful to report back the state of the package to the top-level instance custom resource's status.
+
+To do so, as a special case you can optionally include the top-level instance resource in the output of the flight. When doing so you assume control of the status of your top-level instance.
+
+If omitted, the ATC defaults to setting the status ready condition when all resources deployed by the instance are ready. This is best effort, as yoke can only know the ready conditions for a set of known APIs.
+
+#### A note on external-resources
 
 Prior to version 0.15.8 of the AirTrafficController, updates to external resources, Kubernetes resources outside of your current instance package but referenced via [resource matchers](/docs/concepts/cluster-access/#resource-access-matchers), did not trigger a re-evaluation of the flight.
 
