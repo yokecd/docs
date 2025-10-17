@@ -45,6 +45,9 @@ export default defineConfig({
             {
               slug: 'concepts/cluster-access',
             },
+            {
+              slug: 'concepts/resource-limits',
+            },
           ],
         },
         {
