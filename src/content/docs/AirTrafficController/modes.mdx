@@ -10,6 +10,7 @@ Airways support three modes:
 - standard
 - static
 - dynamic
+- subscription
 
 An airway's mode can be set as part of that Airway's specification:
 
@@ -112,6 +113,16 @@ Prior to version 0.15.8 of the AirTrafficController, updates to external resourc
 
 As of version 0.15.8, any external resource that is looked up will now trigger a re-evaluation of the instance on update or deletion. This allows flights to react to changes in external state and keep in sync with resources elsewhere in the cluster.
 
+### Subscription
+
+Subscription mode is very similar to Dynamic mode, as it allows you to make decisions based on state changes within your cluster by dynamically reacting to events.
+
+The key difference is what triggers a re-evaluation. While Dynamic mode requeues the package on any change to a subresource, Subscription mode is only triggered by changes to subresources and external resources that the flight has explicitly subscribed to. This is achieved by looking up the resource via the `wasi` interface.
+
+This mode acts as a halfway point between Standard mode and Dynamic mode. State that is not subscribed to can be modified by external actors (similar to Standard mode), but changes to subscribed state trigger a complete re-evaluation.
+
+The main advantage is that Subscription mode is less resource intensive than pure Dynamic mode, making it a good fit for flights that contain many unstable resources (i.e., resources that receive frequent updates). It also allows more flexibility for performing manual edits. As with other modes, using `fixDriftInterval` can still serve as a basic self-healing mechanism for any unsubscribed state.
+
 ## Overrides
 
 Modes are described at the Airway level. However sometimes we may want to change the mode for a specific package without affecting all resources associated with our Airway.
@@ -134,4 +145,5 @@ spec:
   image: nginx:latest
   replicas: 2
 ```
+
 
