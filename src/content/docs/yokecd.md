@@ -34,9 +34,11 @@ version: 0.15.0                 # default is "latest"
 dockerAuthSecretName: my-secret # see below
 yokecd:
   resources: {}                 # normal limits and requests for the yokecd-plugin container.
+
 yokecdServer:
-  cacheTTL: 1h                  # default is 24h. Setting it to 0 reduces the cache to its collection time
-  cacheCollectionInterval: 5s   # default is 10s. This is the interval at which the cache will check and remove wasm modules from memory
+  cacheFS: /tmp                 # optional: default is "/tmp". However, you may choose move your cache to another location.
+                                # This cache avoids duplicate module downloads and avoids compiling modules from scratch.
+                              
   resources: {}                 # normal limits and requests for the yokecd-server container
 argocd: {}                      # values are passed directly to the argocd chart
 ```
@@ -83,16 +85,15 @@ spec:
             - yokecd
             - '-svr'
           env:
-            # control the time-to-live of your modules
-            - name: YOKECD_CACHE_TTL
-              value: 24h
-            # controls the interval at which the cache is pruned
-            # this corresponds to the maximum amount of time an expired module may stay in memory before being removed
-            # also serves as a debounce window for concurrent module invocations even when the cache ttl is set to 0.
-            - name: YOKECD_CACHE_COLLECTION_INTERVAL
-              value: 10s
+            - name: YOKECD_CACHE_FS # value must match yokecd-cache mountPath.
+              value: /tmp
+          volumeMounts:
+            - name: yokecd-cache # empty directory for storing downloaded modules and their compiled binary representations.
+              mountPath: /tmp
       volumes:
         - name: cmp-tmp
+          emptyDir: {}
+        - name: yokecd-cache
           emptyDir: {}
 ```
 
