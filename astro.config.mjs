@@ -63,6 +63,7 @@ export default defineConfig({
             { slug: 'airtrafficcontroller/atc' },
             { slug: 'airtrafficcontroller/modes' },
             { slug: 'airtrafficcontroller/orchestration' },
+            { slug: 'airtrafficcontroller/generic-flights' },
           ],
         },
         { slug: 'yokecd' },
