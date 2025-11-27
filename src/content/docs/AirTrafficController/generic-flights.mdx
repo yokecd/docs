@@ -1,0 +1,81 @@
+---
+title: Generic Flight Resources
+---
+
+The AirTrafficController (ATC) is the server-side component of Yoke, responsible for deploying Flights to your Kubernetes cluster as Custom Resources.
+
+Traditionally, the standard method for using the ATC involves extending your cluster using **Airway** resources. An Airway creates a new custom API (CRD) defined by you and binds it to a specific Flight implementation.
+
+This approach offers significant advantages for reusable patterns:
+* **Reusable Applications:** Deploy Kubernetes applications consistently across environments.
+* **Schema Validation:** Leverage built-in schema validation derived from the CRD specification.
+* **SecDevOps & RBAC:** Granular control over who can deploy specific types of applications by granting RBAC permissions to the generated Custom Resources.
+
+## The Challenge: One-Off Infrastructure
+
+While the Airway approach is powerful, it does not cover every infrastructure requirement.
+
+1.  **Unnecessary Indirection:** Not all infrastructure is perfectly reusable. For one-off deployments, creating a specific Airway and CRD to represent a single instance is unnecessary overhead.
+2.  **Input Inconsistency:** The Airway model creates two distinct classes of Flight implementations:
+    * Those that accept arbitrary input (as defined by the Flight itself).
+    * Those that expect `STDIN` to be the JSON representation of a parent Custom Resource.
+
+## The Solution: Generic Flight APIs
+
+To support deploying Flights that are not built as Airways, or to handle one-off infrastructure in a GitOps-friendly manner, the ATC introduces two generic APIs: **Flight** and **ClusterFlight**.
+
+These resources allow you to deploy a Flight directly via the Kubernetes API (using `kubectl`, ArgoCD, Flux, etc.) without defining an intermediate Airway.
+
+### Flight vs. ClusterFlight
+
+Aside from their scope, these two resources share an identical API:
+
+* **`Flight`:** A namespaced API. It is restricted to deploying resources only within the same namespace as the Flight object itself.
+* **`ClusterFlight`:** A cluster-scoped API. It allows for the deployment of cross-namespace resources.
+
+## Prerequisites
+
+Before deploying a generic Flight, the ATC must be installed on your cluster.
+
+```bash
+# Install ATC using the installer Flight
+yoke takeoff atc oci://ghcr.io/yokecd/atc-installer:latest
+
+# View schema for possible configuration inputs
+yoke schematics --wasm oci://ghcr.io/yokecd/atc-installer get schema
+```
+
+## Usage
+
+You can deploy generic Flights using standard Kubernetes manifests. Below is an example of a `Flight` resource that deploys a WASM module from a remote URL.
+
+### Example Manifest
+
+```yaml
+apiVersion: yoke.cd/v1alpha1
+kind: Flight # Change to ClusterFlight for cluster-scoped deployments
+metadata:
+  name: example-deployment
+  namespace: foo
+spec:
+  # The source of the Flight (HTTP(S) or OCI URL)
+  wasmUrl: https://github.com/yokecd/examples/releases/download/latest/demos_ingress.wasm.gz
+  
+  # Input passed to the Flight (YAML or JSON string)
+  input: |
+    image: ealen/echo-server:latest
+    replicas: 2
+  
+  # Command line arguments passed to the WASM execution
+  args: 
+    - --flag
+    - value
+```
+
+### API Reference
+
+For a complete list of available properties and specifications, you can use the built-in Kubernetes documentation tools:
+
+```bash
+kubectl explain flights.spec
+```
