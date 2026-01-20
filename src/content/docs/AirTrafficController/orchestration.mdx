@@ -129,7 +129,7 @@ func main() {
             Storage: true,
             Schema: &apiextensionsv1.CustomResourceValidation{
               // Build the openapi definition from our CustomResource type.
-              OpenAPIV3Schema: openapi.SchemaFrom(reflect.TypeFor[Pipeline]()),
+              OpenAPIV3Schema: openapi.SchemaFor[Pipeline](),
             },
           },
         },
@@ -322,7 +322,7 @@ func main() {
             Storage: true,
             Schema: &apiextensionsv1.CustomResourceValidation{
               // Build the openapi definition from our CustomResource type.
-              OpenAPIV3Schema: openapi.SchemaFrom(reflect.TypeFor[App]()),
+              OpenAPIV3Schema: openapi.SchemaFor[App](),
             },
           },
         },
