@@ -101,7 +101,7 @@ The same effect would occur if we updated the Secret directly via `kubectl`, but
 
 A dynamic Airway instance serves as a control-loop for desired package state. On events to our instance resources (and external ones too) the instance is re-evaluated and a new desired state computed.
 
-In this scenario it is useful to report back the state of the package to the top-level instance custom resource's status.
+In this scenario it is useful to report back the state of the package to the top-level instance custom resource's status. The instance status will always be updated if it is written over stdout, even if the flight execution returns a non-zero status code.
 
 To do so, as a special case you can optionally include the top-level instance resource in the output of the flight. When doing so you assume control of the status of your top-level instance.
 
