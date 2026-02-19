@@ -135,8 +135,7 @@ spec:
         # ...
         volumeMounts:
           - name: docker-auth-secret
-            mountPath: /docker/config.json
-            subPath: .dockerconfigjson
+            mountPath: /docker
         env:
           - name: DOCKER_CONFIG
             value: /docker
@@ -144,6 +143,9 @@ spec:
       - name: docker-auth-secret
         secret:
           secretName: $SECRET_NAME
+          items:
+            - key: .dockerconfigjson
+              path: config.json
 ```
 
 ## Creating YokeCD Applications
