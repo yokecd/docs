@@ -48,6 +48,9 @@ export default defineConfig({
             {
               slug: 'concepts/schematics',
             },
+            {
+              slug: 'concepts/module-provenance',
+            },
           ],
         },
         {
