@@ -2,3 +2,21 @@
   --sl-content-width: 60rem;
 	--sl-sidebar-width: 18.75rem;
 }
+
+@media (min-width: 50rem) {
+  .hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero .stack {
+    text-align: center !important;
+  }
+
+  .hero .copy {
+    align-items: center !important;
+  }
+
+  .hero .actions {
+    justify-content: center !important;
+  }
+}

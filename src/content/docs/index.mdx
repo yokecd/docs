@@ -6,10 +6,19 @@ sidebar:
 hero:
   title: Kubernetes Resource Management for Developers
   tagline: 'Infrastructure as Code, But Actually.'
-  image:
-    dark: ../../assets/logo/SVG/Logo_Yoke_White__Logo_Yoke_.svg
-    light: ../../assets/logo/SVG/Logo_Yoke_.svg
+  actions:
+    - text: Get Started
+      link: /docs/concepts/flights/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/yokecd/yoke
+      icon: external
+      variant: secondary
 ---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
 ## Getting started
 
 ### Install the Yoke CLI
@@ -46,43 +55,51 @@ scoop install yoke
 yoke takeoff my-release https://my-domain.com/example/v1/main.wasm.gz
 ```
 
-### Visit the core docs
+### Explore the docs
 
-- [concepts](/docs/concepts/flights/)
-- [examples](/docs/examples/basics/)
-- [helm compatibility](/docs/helm-compatibility)
-- [air traffic controller](/docs/airtrafficcontroller/atc/)
-- [argocd management plugin](/docs/yokecd)
-- [videos](/docs/video)
+<CardGrid>
+  <LinkCard title="Concepts" href="/docs/concepts/flights/" description="Learn about Flights, Yoke's core building block." />
+  <LinkCard title="Examples" href="/docs/examples/basics/" description="Practical examples to get you up and running." />
+  <LinkCard title="Helm Compatibility" href="/docs/helm-compatibility" description="Use Yoke alongside your existing Helm charts." />
+  <LinkCard title="Air Traffic Controller" href="/docs/airtrafficcontroller/atc/" description="Server-side controller for CRD-native package management." />
+  <LinkCard title="ArgoCD Plugin" href="/docs/yokecd" description="GitOps-friendly ArgoCD Config Management Plugin." />
+  <LinkCard title="Videos" href="/docs/video" description="Watch tutorials and demos." />
+</CardGrid>
 
-Or altenatively for technical writing about yoke and related subjects visit the [blog](https://yokecd.github.io/blog).
+Or for technical writing about Yoke and related subjects, visit the [blog](https://yokecd.github.io/blog).
 
 ## What is Yoke?
 
-The Yoke Project is a set of tools for working with package management differently than the status quo. Where once only YAML and templates of YAML ruled the representation of Kubernetes resources and the packages thereof, we can now work with code and benefit from native control flow, type checking, compiler guarantees, testing, linters, and other fundamental tools of software engineering.
+<CardGrid>
+  <Card title="Client-side Package Manager" icon="rocket">
+    Deploy code packages directly to Kubernetes with the `yoke` CLI.
+  </Card>
+  <Card title="ArgoCD Plugin" icon="puzzle">
+    An ArgoCD Config Management Plugin that enables GitOps workflows with code packages.
+  </Card>
+  <Card title="Server-side Controller" icon="setting">
+    Create CustomResourceDefinitions (CRDs) to represent packages natively in Kubernetes.
+  </Card>
+  <Card title="Go SDK" icon="open-book">
+    Go packages to facilitate the transition from Helm Charts to Yoke Flights.
+  </Card>
+</CardGrid>
 
-It consists of:
+The Yoke Project is a set of tools for working with Kubernetes package management differently than the status quo. Where once only YAML and templates of YAML ruled the representation of Kubernetes resources, you can now work with **real code**, with native control flow, type checking, compiler guarantees, testing, linters, and all the fundamental tools of software engineering.
 
-- A client-side package manager for deploying code packages to Kubernetes.
-- An ArgoCD Config Management Plugin that enables ArgoCD to work with code packages.
-- A server-side controller that allows you to create CustomResourceDefinitions (CRDs) to represent packages natively in Kubernetes.
-- Go packages to facilitate the transition from Helm Charts to Yoke Flights (code packages).
 
-The primary distinction between Yoke and other Kubernetes package managers, such as Helm and Timoni, lies in how Yoke describes packages. In the context of yoke packages are called **Flights** (Flights are to Yoke what Charts are to Helm). Unlike Helm and Timoni, which define packages using YAML, CUE, or other data/configuration languages, **yoke utilizes general-purpose code to describe Kubernetes packages**.
+The primary distinction between Yoke and other Kubernetes package managers (such as Helm and Timoni) lies in how packages are described. In Yoke, packages are called **Flights**, Flights are to Yoke what Charts are to Helm. Unlike Helm and Timoni, which use YAML, CUE, or other data languages, **Yoke uses general-purpose code**.
 
-With yoke, **Flights are programs that generate the desired Kubernetes resources in either JSON or YAML format and output them to stdout**. Flights are typically packaged as **[WebAssembly (wasm) executables](/docs/concepts/wasm)**, with Yoke embedding Wazero, a zero-dependency wasm runtime for Go, to execute these programs.
+**Flights are programs** that generate the desired Kubernetes resources in JSON or YAML and output them to stdout. Flights are packaged as **[WebAssembly (wasm) executables](/docs/concepts/wasm)**, with Yoke embedding Wazero, a zero-dependency wasm runtime for Go, to execute them.
 
-Sharing packages is the same as sharing code. Package components can be distributed and versioned using the respective language's ecosystem package manager, such as npm, cargo, or Go modules. **Any language that compiles to wasm enjoys first-class support in Yoke**. If your chosen language does not compile to wasm, you can still invoke the program and pipe the output directly to Yoke. However, this approach comes with certain drawbacks, including potential issues related to portability and security.
+Sharing packages is the same as sharing code. Package components can be distributed and versioned using the language's native ecosystem (npm, cargo, Go modules). **Any language that compiles to wasm enjoys first-class support in Yoke**.
 
 ## Why Another Package Manager?
 
-As the DevOps ecosystem transitions from platform-operators to platform-engineering, our tools for interfacing with Kubernetes (K8s) must evolve accordingly. Describing Kubernetes resources through text templates represents the minimum standard we have set. It's evident that this approach doesn't align with software engineering practices. It lacks essential features such as proper type safety, compiler guarantees, validation, testing, autocompletion, and consistent IDE support.
+As the DevOps ecosystem transitions from platform-operators to platform-engineering, our tools for interfacing with Kubernetes must evolve. Describing Kubernetes resources through text templates is the minimum viable standard, and it clearly doesn't align with software engineering practices. It lacks type safety, compiler guarantees, validation, testing, autocompletion, and consistent IDE support.
 
-The crucial observation to note is that Kubernetes (K8s) resources differ fundamentally from web pages or emails. So, why do we use templates as if they were? These files represent diverse APIs supported by Kubernetes; in essence, they are structured data. **The most effective tools for handling structured data are programming languages**.
+The key insight: Kubernetes resources are **structured data**, not documents. The most effective tools for handling structured data are **programming languages**.
 
-Working with raw yaml manifests for representing Kubernetes APIs is error prone. When we template them we are no longer concerned with the configuration of our resources but instead the rendering of the format of our configuration.
+New tools like CUE, Jsonnet, PKL, and others have emerged to address the shortcomings of raw YAML, inspiring new package managers like [timoni](https://timoni.sh/). Yoke's stance is that these tools will always fall short of the safety, flexibility, and power of building packages from real code.
 
-New tools like CUE, jsonnette, PKL, and others have emerged to address some of the short comings of raw YAML configuration and templating. Inspiring new K8s package managers such as [timoni](https://timoni.sh/). However it is yoke's stance that these tools will always fall short of the safety, flexibility and power of building your packages from code.
-
-With the emergence of a shared cross-platform target for code, WebAssembly (wasm), it is now possible to package and utilize the Kubernetes ecosystem with greater emphasis on type safety, testing, and developer experience than ever before. This is the niche Yoke aims to fill within the K8s Package Management Landscape.
-
+With the emergence of WebAssembly as a shared cross-platform target, it is now possible to bring type safety, testing, and developer experience to the Kubernetes ecosystem like never before. **This is the niche Yoke aims to fill.**
