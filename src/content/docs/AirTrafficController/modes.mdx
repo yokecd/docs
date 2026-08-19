@@ -105,7 +105,7 @@ In this scenario it is useful to report back the state of the package to the top
 
 To do so, as a special case you can optionally include the top-level instance resource in the output of the flight. When doing so you assume control of the status of your top-level instance.
 
-If omitted, the ATC defaults to setting the status ready condition when all resources deployed by the instance are ready. This is best effort, as yoke can only know the ready conditions for a set of known APIs.
+If omitted, the ATC defaults to setting the status ready condition when all resources deployed by the instance are ready. This is best effort, as yoke can only know the ready conditions for a set of known APIs. For third-party resources, you can teach yoke what ready means via [custom readiness definitions](/docs/concepts/readiness/#custom-readiness-definitions).
 
 #### A note on external-resources
 

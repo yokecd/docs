@@ -51,6 +51,9 @@ export default defineConfig({
             {
               slug: 'concepts/module-provenance',
             },
+            {
+              slug: 'concepts/readiness',
+            },
           ],
         },
         {
